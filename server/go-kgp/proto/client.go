@@ -257,11 +257,15 @@ func (cli *Client) ping() bool {
 		return false
 	}
 
+	start := time.Now() // Record the start time
+
 	select {
 	case <-cli.ctx.Done():
 		return false
 	case <-time.After(cli.conf.Proto.Timeout):
-		cli.error(id, "received no pong")
+		elapsed := time.Since(start) // Calculate elapsed time
+		currentTime := time.Now().UnixMilli()
+		cli.error(id, fmt.Sprintf("received no pong after %v, %d", elapsed, currentTime))
 		for cli.Kill == nil {
 			time.Sleep(time.Millisecond * 10)
 		}
@@ -270,6 +274,7 @@ func (cli *Client) ping() bool {
 		}
 		return false
 	case <-cli.alive:
+		// elapsed := time.Since(start)                                 // Calculate elapsed time for successful pong
 		return true
 	}
 }

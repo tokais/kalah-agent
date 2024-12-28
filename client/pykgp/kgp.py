@@ -22,8 +22,10 @@ import os
 import sys
 import socket
 import threading
+from threading import Thread, Event
 import multiprocessing as mp
 import copy
+import time
 
 try:
     import websocket
@@ -82,7 +84,27 @@ class Board:
                 *self.south_pits,
                 *self.north_pits]
 
-        return '<{}>'.format(','.join(map(str, data)))
+    
+        n = self.size
+        south_kalah = self.south
+        north_kalah = self.north
+        south_pits = self.south_pits
+        north_pits = self.north_pits
+
+        # Build the ASCII representation
+        board_width = len(str(max(north_pits)))  # Width of the widest number for formatting
+        fmt = f"{{:^{board_width}}}"  # Centered formatting template for numbers
+
+        # North pits row
+        north_pits_row = " ".join(fmt.format(stones) for stones in reversed(north_pits))
+
+        # South pits row
+        south_pits_row = " ".join(fmt.format(stones) for stones in south_pits)
+
+        # North kalah, pits, and South kalah combined
+        north_row = f"{fmt.format(north_kalah)} | {north_pits_row} |"
+        south_row = f"| {south_pits_row} | {fmt.format(south_kalah)}"
+        return f"{north_row}\n{" "*(board_width+1)}{south_row}\n"
 
     def __getitem__(self, key):
         """
@@ -287,6 +309,7 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
     def handle(read, write):
         id = mp.Value('d', 1)
 
+
         def send(cmd, *args, ref=None):
             """
             Send cmd with args to server.
@@ -315,34 +338,36 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
             with id.get_lock():
                 id.value += 2
 
-        def query(state, cid):
+        def query(state, cid, stop_event):
             """
-            Start querying agent what move to make.
-
-            State is the current board state and cid the ID of the
-            state command that issued the request.
+            Query the agent for moves, with a cooperative stop mechanism.
             """
-
             if state.is_final():
                 return
             last = None
             for move in agent(state):
+                if stop_event.is_set():  # Check if the thread should stop
+                    break
                 if not type(move) is int:
                     raise TypeError("Not a move")
                 if move != last:
-                    send("move", move+1, ref=cid)
+                    send("move", move + 1, ref=cid)
                     last = move
             else:
                 send("yield", ref=cid)
 
         threads = {}
+        stop_flags = {}  # Dictionary to store stop flags for each thread
+
 
         def sender():
             while True:
                 write(queue.get())
+        
         threading.Thread(target=sender).start()
 
         for line in read():
+            start_time = time.time()
             if debug:
                 print("<", line.strip(), file=sys.stderr)
 
@@ -374,20 +399,22 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
                     board = args[0]
 
                     if cid in threads:
-                        # Duplicate IDs by the server are ignored
                         continue
 
-                    threads[cid] = mp.Process(
+                    stop_flags[cid] = Event()  # Create a stop flag for this thread
+                    threads[cid] = Thread(
                         name=f'query-{cid}',
-                        args=(board, cid),
-                        target=query)
+                        target=query,
+                        args=(board, cid, stop_flags[cid])
+                    )
                     threads[cid].start()
+                    
                 elif cmd == "stop":
                     if ref and ref in threads:
-                        thread = threads[ref]
-                        thread.kill()
-                        thread.join()
+                        stop_flags[ref].set()  # Signal the thread to stop
+                        threads[ref].join()  # Wait for the thread to finish
                         threads.pop(ref, None)
+                        stop_flags.pop(ref, None)
                 elif cmd == "ok":
                     pass    # ignored
                 elif cmd == "error":
@@ -397,6 +424,8 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
                         send("pong", args[0], ref=cid)
                     else:
                         send("pong", ref=cid)
+                    end_time = time.time()
+                    print(f"PING: {((end_time -start_time)*1000):.4f} ms, {start_time}")
                 elif cmd == "goodbye":
                     return
             except ValueError:
@@ -423,8 +452,12 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
             sock.connect((host, port))
             with sock.makefile(mode='rw') as pseudo:
                 def write(msg):
-                    pseudo.write(msg)
-                    pseudo.flush()
+                    try:
+                        pseudo.write(msg)
+                        pseudo.flush()
+                    except BrokenPipeError:
+                        print("Connection closed by the server.", file=sys.stderr)
+                        return
                 handle(lambda: pseudo, write)
 
 # Local Variables:
