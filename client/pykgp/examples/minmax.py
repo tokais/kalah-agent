@@ -91,4 +91,17 @@ def agent(state):
 
 if __name__ == "__main__":
     import os
-    kgp.connect(agent, host="localhost", debug=True, token=os.getenv("TOKEN"), name="Minmax 16")
+    kgp.connect(agent, 
+                host="localhost", 
+                port=2671, 
+                debug=True, 
+                token="BBBBB", 
+                authors = ["Firevince"],
+                name="Minmax Mein Freund")
+    # kgp.connect(agent, host    = "wss://kalah.kwarc.info/socket",
+    #                    token   = "CCCCCCCCC",
+    #                    debug   = True,
+    #                    authors = ["Firevince"],
+    #                    name    = "FireFire")
+
+
