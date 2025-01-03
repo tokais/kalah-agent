@@ -33,7 +33,7 @@ class searchtree:
 
 
 
-def search_monte_carlo(node, N, best_move = 0):
+def search_monte_carl(node, N, best_move = 0):
 
     def expand_children(node):
         ''' If leave node would be explored a second time it 
@@ -102,14 +102,12 @@ def search_monte_carlo(node, N, best_move = 0):
         move = random.choice(state.legal_moves(side))
         after, again = state.sow(side, move)
 
-        try:
-            if again:
-                return rollout(after, side, depth + 1)   
-            else:
-                return rollout(after, not side, depth + 1)
-        except:
-            print("lol")
-            return 0
+
+        if again:
+            return rollout(after, side, depth + 1)   
+        else:
+            return rollout(after, not side, depth + 1)
+
     
     def find_best_move(node):
         max_child = node.children[0]
@@ -123,22 +121,25 @@ def search_monte_carlo(node, N, best_move = 0):
 
     _, node, N = traverse(node, side=kgp.SOUTH, N=N)
     
-    new_best_move = find_best_move(node) 
+    best_move = find_best_move(node) 
+
+     
+    return (node, N, best_move)
 
 
-    return node, N, best_move
-    if new_best_move != best_move:
-        best_move = new_best_move
-        yield 
+    # if new_best_move != best_move:
+    #     best_move = new_best_move
+    #     yield 
 
-    print(N)
-    # if N > 3380:
-    #     print("max?")
-    #     node.print_nodes()
-    #     return node, best_move
-    yield from search_monte_carlo(node, N, best_move)
+    # print(N)
+    # # if N > 3380:
+    # #     print("max?")
+    # #     node.print_nodes()
+    # #     return node, best_move
+    # yield from search_monte_carlo(node, N, best_move)
 
-sys. setrecursionlimit(1200)
+
+# sys. setrecursionlimit(1200)
 board = kgp.Board.parse("<8,0,0,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8>")
 
 print(board)
@@ -147,12 +148,32 @@ tree.simuls = 1
 
 
 
-best_move = 0
-end = time.time() * 1000 + 5000
+N = 0
 
-while time.time() * 1000 < end:
-    node, N, best_move = search_monte_carlo(node, N, best_move)
-    print(node.state)
-    print(best_move)
+while True:
+    best_move = 0
+    end = time.time() + 3
+
+    while time.time() < end:
+        tree, N, new_best_move = search_monte_carl(tree, N, best_move)
+
+        if new_best_move != best_move:
+            best_move = new_best_move
+            # print(tree.state)
+            # print(best_move)
+    
+
+    tree=tree.children[best_move]
+    print(tree.state)
+    mymove = input("Choose your move: ")
+    while not tree.state.is_legal(kgp.SOUTH, mymove):
+        
+
+    tree = tree.children[int(mymove) + 1]
+    print(tree.state)
+
+
+
+tree.print_nodes()
 
     
