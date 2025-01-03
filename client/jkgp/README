@@ -1,0 +1,18 @@
+Kalah Game Protocol Java library
+
+Maintainer: Tobias Völk <tobias.voelk@fau.de>
+
+To use this library, start out with ExampleAgent.java (or a renamed
+copy) as template.  A more "sophisticated" example (don't plagiarize)
+is MinMaxAgent.java.  Implement your agent according to the comments,
+execute via "java -cp "jkgp.jar" YourAgent.java".
+
+You can find a pre-built Jar-file here:
+
+    https://wwwcip.informatik.uni-erlangen.de/~el82onyk/jkgp.jar
+    
+The documentation is available at:
+    
+    https://wwwcip.informatik.uni-erlangen.de/~el82onyk/jkgp_doc/info/kwarc/kalah/package-summary.html
+
+Happy coding!

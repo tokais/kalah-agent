@@ -1,0 +1,58 @@
+{{ template "header.tmpl" }}
+
+{{ $game := .Game }}
+{{ $moves := .Moves }}
+
+{{ with .Game }}
+{{ $game := . }}
+<p>
+Game between
+{{ template "link-agent.tmpl" .South }}
+on the south side, and
+{{ template "link-agent.tmpl" .North }}
+on the north side.
+</p>
+
+<table class="move list">
+  <thead>
+      <tr>
+	  <td>Nr</td>
+	  <td>Pit</td>
+	  <td>Agent</td>
+	  <td>Comment</td>
+	  <td>When</td>
+      </tr>
+  </thead>
+  <tbody>
+    {{ range $i, $m := $moves }}
+      <tr>
+	<td>{{ $i }}</td>
+	<td>{{ uinc $m.Choice }}</td>
+	<td>
+	{{ template "link-agent.tmpl" $m.Agent }}
+	</td>
+	<td>
+	{{ with $m.Comment }}
+	<pre class="comment">{{ . }}</pre>
+	{{ else}}
+	<em>No comment</em>
+	{{ end }}
+	</td>
+	<td>{{ timefmt .Stamp }}</td>
+       </tr>
+       <tr><td colspan="5">{{ draw . $game }}</td></tr>
+    {{ else }}
+       <tr><td colspan="5"><em>No moves</em></td></tr>
+    {{ end }}
+  </tbody>
+</table>
+
+<p>
+{{ describe . }}
+</p>
+
+{{ else }}
+<p>Unknown game.</p>
+{{ end }}
+
+{{ template "footer.tmpl" }}
