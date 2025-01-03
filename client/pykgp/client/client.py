@@ -8,8 +8,6 @@ def evaluate(state):
     return state[kgp.SOUTH] - state[kgp.NORTH]
 
 
-
-
 def search(state, depth, side, alpha, beta):
 
     def child(move):
@@ -39,8 +37,6 @@ def search(state, depth, side, alpha, beta):
             if beta <= alpha:
                 break
         
-        
-
     choose = max if side == kgp.SOUTH else min
 
     return choose(childs, key=lambda ent: ent[0])

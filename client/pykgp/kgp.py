@@ -92,7 +92,7 @@ class Board:
         north_pits = self.north_pits
 
         # Build the ASCII representation
-        board_width = len(str(max(north_pits)))  # Width of the widest number for formatting
+        board_width = len(str(max(max(north_pits), max(south_pits))))  # Width of the widest number for formatting
         fmt = f"{{:^{board_width}}}"  # Centered formatting template for numbers
 
         # North pits row
@@ -102,9 +102,9 @@ class Board:
         south_pits_row = " ".join(fmt.format(stones) for stones in south_pits)
 
         # North kalah, pits, and South kalah combined
-        north_row = f"{fmt.format(north_kalah)} | {north_pits_row} |"
+        north_row = f"{north_kalah} | {north_pits_row} |"
         south_row = f"| {south_pits_row} | {fmt.format(south_kalah)}"
-        return f"{north_row}\n{" "*(board_width+1)}{south_row}\n"
+        return f"{north_row}\n{" "*(len(str(north_kalah))+1)}{south_row}\n"
 
     def __getitem__(self, key):
         """
