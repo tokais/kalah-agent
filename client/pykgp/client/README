@@ -1,0 +1,56 @@
+This is the template for a KGP agent using Python.  It contains the
+following files to get started:
+
+* agent.py
+
+  We suggest you implement your agent in this file.  It imports the
+  library that you don't have to touch.  The file already includes a
+  few hints and ideas that will help you along.
+
+* kgp.py
+
+  This file implements the networking managment (TCP and Websocket)
+  and the protocol parsing.
+
+* ABOUT
+
+  The file describing your submission.  We require your team to be
+  able and provide at least a basic description of their approach.
+  This file also contains a list of all your team members. DO NOT
+  FORGET to fill it out before submitting your solution.
+
+* Dockerfile
+
+  The actual tournament makes use of Docker containers[0], and we want
+  all submissions to be uploaded with a functional "Dockerfile" (that
+  describes how the agent is built and executed).
+
+  In case you decide to want to use non-standard libraries or FFIs,
+  please make sure to adjust and test the Dockerfile, to make sure it
+  will build on our end.  A good starting point is often to start with
+  the Alpine[1] or Debian containers[2], install all the necessary
+  dependencies and then progress to building your image.
+
+  [0] https://www.docker.com/
+  [1] https://hub.docker.com/_/alpine
+  [2] https://hub.docker.com/_/debian
+
+* practice.sh
+
+  Use this script to have "agent.py" connect to the public practice
+  server (https://kalah.kwarc.info).  This is just a convenience
+  feature, you don't have to use it.
+
+* prepare.sh
+
+  Use this script to bundle your agent and all related files into a
+  complete submission.  The script will try and to some basic checks
+  to make sure all the necessary conditions for a submission are met.
+  Not all submissions that pass this script are necessarily correct,
+  but if the script emits an error or a warning, there is probably
+  something wrong.
+
+If you have any issues, please refer to the information on the public
+practice server:
+
+  https://kalah.kwarc.info/about

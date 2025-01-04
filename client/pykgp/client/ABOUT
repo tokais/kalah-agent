@@ -1,0 +1,76 @@
+ ___   ___    _  _  ___ _____   ___ ___ _  _  ___  ___ ___ 
+|   \ / _ \  | \| |/ _ \_   _| |_ _/ __| \| |/ _ \| _ \ __|
+| |) | (_) | | .` | (_) || |    | | (_ | .` | (_) |   / _| 
+|___/ \___/  |_|\_|\___/ |_|   |___\___|_|\_|\___/|_|_\___|
+                                                           
+ _____ _  _ ___ ___   ___ ___ _    ___      ___ ___ _    _    
+|_   _| || |_ _/ __| | __|_ _| |  | __|    | __|_ _| |  | |   
+  | | | __ || |\__ \ | _| | || |__| _| _   | _| | || |__| |__ 
+  |_| |_||_|___|___/ |_| |___|____|___(_)  |_| |___|____|____|
+                                                              
+  ___  _   _ _____     _   _    _      _____ _  _ ___ 
+ / _ \| | | |_   _|   /_\ | |  | |    |_   _| || | __|
+| (_) | |_| | | |    / _ \| |__| |__    | | | __ | _| 
+ \___/ \___/  |_|   /_/ \_\____|____|   |_| |_||_|___|
+                                                      
+ ___ ___ ___  _   _ ___ ___ _____ ___ ___  
+| _ \ __/ _ \| | | | __/ __|_   _| __|   \ 
+|   / _| (_) | |_| | _|\__ \ | | | _|| |) |
+|_|_\___\__\_\\___/|___|___/ |_| |___|___/ 
+                                           
+ ___ _  _ ___ ___  ___ __  __   _ _____ ___ ___  _  _ _ 
+|_ _| \| | __/ _ \| _ \  \/  | /_\_   _|_ _/ _ \| \| | |
+ | || .` | _| (_) |   / |\/| |/ _ \| |  | | (_) | .` |_|
+|___|_|\_|_| \___/|_|_\_|  |_/_/ \_\_| |___\___/|_|\_(_)
+                                                        
+
+
+Use this file to give us some information on your agent and your team:
+
+Agent
+=====
+
+Idea
+----
+
+Our general approach was to...
+
+  WRITEME (obligatory)
+
+Implementation
+--------------
+
+We began writing our agent by...
+
+  WRITEME (obligatory)
+
+CAVEATS
+-------
+
+Note the that there might be complications if:
+
+  WRITEME (optional)
+
+Team
+====
+
+List all students that participate in our group are:
+
+- Max Musterman (be15piel)
+- Lieschen Müller (kl15chee)
+- Hein Janmaat (se45hell)
+
+Checklist
+=========
+
+Consider taking the time to appropriately check these points:
+
+- [ ] Our agent runs without raising exceptions.
+- [ ] Our agent manages to reliably beat a random agent.
+- [ ] Our agent connects to localhost:2671 by default.
+- [ ] Any additional dependencies have been specified in the
+      Dockerfile and we confirm that it builds.
+- [ ] Max Musterman, Lieschen Müller and Hein Janmaat are not part
+      of our team.
+- [ ] We will not check this box.
+- [ ] We have read all of the above.
