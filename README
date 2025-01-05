@@ -1,5 +1,8 @@
 	KALAH GAME PROTOCOL
 
+This is a fork to https://github.com/KWARC/kalah-game/tree/trunk
+It extends the original repository with implementations for MiniMax- and MCTS-clients.
+
 Contents of this repository:
 
   /spec/	The source of a specification, of a protocol to
