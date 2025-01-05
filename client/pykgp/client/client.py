@@ -3,6 +3,7 @@
 import kgp
 import math
 import random
+from MCTS import mcts_agent
 
 def evaluate(state):
     return state[kgp.SOUTH] - state[kgp.NORTH]
@@ -46,7 +47,7 @@ def agent(state):
     print(state)
     for depth in range(1, 100):
         res = search(state, depth, kgp.SOUTH, -math.inf, math.inf)[1]
-        print(depth, res)
+        
         yield res
 
 
