@@ -4,3 +4,4 @@ client/pykgp/__pycache__/*
 client/pykgp/server_cert.pem
 server/go-kgp/result.pdf
 server/go-kgp/server.toml
+client/pykgp/client/__pycache__/*
