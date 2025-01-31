@@ -43,17 +43,17 @@ def search(state, depth, side, alpha, beta):
     return choose(childs, key=lambda ent: ent[0])
 
 
-def agent(state):
-    print(state)
+def minmax_agent(state, side = kgp.SOUTH):
+    # print(state)
     for depth in range(1, 100):
-        res = search(state, depth, kgp.SOUTH, -math.inf, math.inf)[1]
+        res = search(state, depth, side, -math.inf, math.inf)[1]
         
         yield res
 
 
 if __name__ == "__main__":
     import os
-    kgp.connect(agent, 
+    kgp.connect(minmax_agent, 
                 host="localhost", 
                 port=2671, 
                 debug=True, 

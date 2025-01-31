@@ -180,3 +180,11 @@ client/pykgp/server_cert.pem
 server/go-kgp/result.pdf
 server/go-kgp/server.toml
 client/pykgp/client/__pycache__/*
+launch.json
+.vscode/settings.json
+.vscode/tasks.json
+launch.json
+client/scripts/MCTS_c.dSYM/Contents/Resources/Relocations/aarch64/MCTS_c.yml
+client/scripts/MCTS_c.dSYM/Contents/Resources/DWARF/MCTS_c
+client/scripts/MCTS_c.dSYM/Contents/Info.plist
+client/scripts/MCTS_c
