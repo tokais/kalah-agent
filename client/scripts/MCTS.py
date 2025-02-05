@@ -1,15 +1,12 @@
 import kgp
 import math
 import random
-import sys
-import time
-import copy
 
 
-def evaluate(state):
+def evaluate(state, side=kgp.SOUTH):
     # not sure which eval is better 
-    return (1 if (state[kgp.SOUTH] - state[kgp.NORTH]) > 0 else 0)
-    return state[kgp.SOUTH] - state[kgp.NORTH]
+    return (1 if (state[side] - state[not side]) > 0 else 0)
+    return state[side] - state[not side]
 
 
 class searchtree:
@@ -45,7 +42,7 @@ class searchtree:
         best.print_nodes(depth +1)
 
 
-def search_monte_carl(node, N, side):
+def search_monte_carl(node, N, max_player_side):
 
     def expand_children(node):
         ''' If leave node would be explored a second time it 
@@ -86,7 +83,8 @@ def search_monte_carl(node, N, side):
         if node.is_leave():
             if node.simuls > 0:   
                 if node.state.is_final():
-                      return evaluate(node.state), node, N  
+                      # evaluate depending on which side is the maximizing player
+                      return evaluate(node.state, max_player_side), node, N  
                 node.children = expand_children(node)
             else:
                 res = rollout(node.state, node.side)
@@ -105,7 +103,7 @@ def search_monte_carl(node, N, side):
         '''full rollout - play a leave state with random play till end
             returns: evaluation:int'''
         if state.is_final():
-            return evaluate(state)   
+            return evaluate(state, max_player_side)   
         
         move = random.choice(state.legal_moves(side))
         after, again = state.sow(side, move)
@@ -158,6 +156,7 @@ def mcts_agent(state):
     tree = searchtree(state, kgp.SOUTH)
     tree.simuls = 1
     best_move = -1
+    
     while True:
         tree, new_best_move, again = bot_move_agent(tree, 1)
         if new_best_move != best_move:

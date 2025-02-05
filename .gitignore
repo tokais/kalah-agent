@@ -188,3 +188,12 @@ client/scripts/MCTS_c.dSYM/Contents/Resources/Relocations/aarch64/MCTS_c.yml
 client/scripts/MCTS_c.dSYM/Contents/Resources/DWARF/MCTS_c
 client/scripts/MCTS_c.dSYM/Contents/Info.plist
 client/scripts/MCTS_c
+client/scripts/C_codes/MCTS_c
+client/scripts/C_codes/Contents/Resources/DWARF/MCTS_c_deepseek
+client/scripts/C_codes/MCTS_c.dSYM/Contents/Info.plist
+client/scripts/C_codes/MCTS_c.dSYM/Contents/Resources/DWARF/MCTS_c
+client/scripts/C_codes/MCTS_c.dSYM/Contents/Resources/Relocations/aarch64/MCTS_c.yml
+client/scripts/C_codes/Contents/Resources/Relocations/aarch64/MCTS_c_deepseek.yml
+client/scripts/C_codes/Contents/Info.plist
+client/scripts/C_codes/MCTS_c_deepseek
+arena.txt

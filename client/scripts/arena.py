@@ -41,6 +41,7 @@ def player_move(tree):
             if new_tree.children == []:
                 print("started new tree")
                 new_tree = searchtree(state, kgp.SOUTH)
+                new_tree.simuls = 1
             else:
                 new_tree = new_tree.children[int(mymove)]
             mymove = None
@@ -61,6 +62,7 @@ def mcts_move(state:kgp.Board, move_time:int, side, tree:searchtree):
     if tree is None:
         print("started new tree")
         tree = searchtree(state, side)
+        tree.simuls = 1
     N = tree.simuls
     new_tree = copy.deepcopy(tree)
     again = True
@@ -101,23 +103,24 @@ def minmax_move(state, move_time, side, tree):
                 new_state, again = tree.state.sow(side, best_move)
         if again:
             print("Calculating another move ...")
-
-    
-
     return tree, new_state
 
 
 
-    
-
+def hybrid_move(state, move_time, side, tree):
+    if sum(state.north_pits) + sum(state.south_pits) < 20:
+        return minmax_move(state, move_time, side, tree)
+    else:
+        return mcts_move(state, move_time, side, tree)
 
 def play_interactive():
     tree = searchtree(BOARD, kgp.SOUTH)
     tree.simuls = 1
+    time = 3
 
     while True:
         print(tree.state)
-        tree, state = mcts_move(tree.state, 3, kgp.NORTH, tree)
+        tree, state = mcts_move(tree.state, time, kgp.NORTH, tree)
         if state.is_final():
             print("Game ended")
             print(("South won" if state[kgp.SOUTH] - state[kgp.NORTH] > 0 else "North won"))
@@ -128,7 +131,11 @@ def play_interactive():
             print(("South won" if state[kgp.SOUTH] - state[kgp.NORTH] > 0 else "North won"))
             break
 
-
+def bot_make_move(play_func, name, state, time, side, tree):
+    tree, state = play_func(state, time, side, tree)
+    print(f"{name}: ")
+    print(state)
+    return tree, state
 
 def arena():
     tree = searchtree(BOARD, kgp.SOUTH)
@@ -138,32 +145,35 @@ def arena():
     north = 0
     south = 0
     res = 0
+    
+    north_player = "hybrid"
+    north_player_func = hybrid_move
+    south_player = "minmax"
+    south_player_func = minmax_move
+
+    print(f"Arena: {north_player} (South) vs. {south_player} (Nort)")
     for i in range(100):
-        print(f"Game {i}")
-        print(f"North: {north}, South: {south}, Result: {res}")
+        with open("arena.txt", "a") as f:
+            f.write(f"Game {i}\n")
+            f.write(f"{north_player}(North): {north}, {south_player}(South): {south}, Result: {res}\n")
+            
         tree = searchtree(BOARD, kgp.SOUTH)
         state = BOARD
         tree.simuls = 1
         while True:
-
-            tree, state = mcts_move(state, time, kgp.SOUTH, tree)
-            print("mcts: ")
-            print(state)
+            tree, state = bot_make_move(north_player_func, north_player, state, time, kgp.NORTH, tree)
             if state.is_final():
-                res += (1 if (state[kgp.SOUTH] - state[kgp.NORTH]) > 0 else 0)
-                north += state[kgp.NORTH]
-                south += state[kgp.SOUTH]
                 break
-            tree, state = minmax_move(state, time, kgp.NORTH, tree)
-            print("minmax: ")
-            print(state)
+            tree, state = bot_make_move(south_player_func, south_player, state, time, kgp.SOUTH, tree)
             if state.is_final():
-                res += (1 if (state[kgp.SOUTH] - state[kgp.NORTH]) > 0 else 0)
-                north += state[kgp.NORTH]
-                south += state[kgp.SOUTH]
                 break
+        
+        res += (1 if (state[kgp.SOUTH] - state[kgp.NORTH]) > 0 else 0)
+        north += state[kgp.NORTH]
+        south += state[kgp.SOUTH]
 
 if __name__ == "__main__":
+    arena()
     if sys.argv[1] == "interactive":
         play_interactive()  
     elif sys.argv[1] == "arena":
