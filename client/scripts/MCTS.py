@@ -5,7 +5,7 @@ import random
 
 def evaluate(state, side=kgp.SOUTH):
     # not sure which eval is better 
-    return (1 if (state[side] - state[not side]) > 0 else 0)
+    return (1 if (state[not side] - state[side]) > 0 else 0)
     return state[side] - state[not side]
 
 
@@ -19,6 +19,11 @@ class searchtree:
 
     def is_leave(self):
         return self.children == []
+    
+    def is_final(self):
+        if sum(self.state.north_pits) + sum(self.state.south_pits) < abs(self.state.north - self.state.south):
+            return True
+        return False
     
     def find_node(self, state):
         '''finds a node in the tree with the given state, functions may get optimized'''
@@ -149,14 +154,12 @@ def bot_move_agent(tree, best_move):
     return tree, best_move, again
 
 
-
-
 def mcts_agent(state):
     print(state)
     tree = searchtree(state, kgp.SOUTH)
     tree.simuls = 1
     best_move = -1
-    
+
     while True:
         tree, new_best_move, again = bot_move_agent(tree, 1)
         if new_best_move != best_move:
