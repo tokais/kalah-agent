@@ -3,7 +3,8 @@
 import kgp
 import math
 import random
-from MCTS import mcts_agent
+import time
+from client.scripts.MCTS_agent_vince import mcts_agent
 
 def evaluate(state):
     return state[kgp.SOUTH] - state[kgp.NORTH]
@@ -42,6 +43,24 @@ def search(state, depth, side, alpha, beta):
 
     return choose(childs, key=lambda ent: ent[0])
 
+def minmax_move_arena(minmax_func, state, move_time, side, tree):
+    '''simulates minmax move
+        returns new tree and new state'''
+    best_move = -1
+    end = time.time() + move_time  
+    again = True
+    while again:
+        again = False
+        for move in minmax_func(state, side):
+            if time.time() > end:
+                break
+            print(best_move, end=",")
+            if move != best_move:
+                best_move = move
+                new_state, again = tree.state.sow(side, best_move)
+        if again:
+            print("Calculating another move ...")
+    return tree, new_state
 
 def minmax_agent(state, side = kgp.SOUTH):
     # print(state)

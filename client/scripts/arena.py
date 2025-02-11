@@ -1,13 +1,11 @@
 import kgp
-import math
-import random
 import sys
 import time
 import copy
-from MCTS import searchtree, search_monte_carl, evaluate
+from client.scripts.MCTS_agent_vince import searchtree, MCTS, mcts_move_arena
 
-from mm_client import minmax_agent
-
+from client.scripts.minimax_agent_vince import minmax_agent, minmax_move_arena
+from hybrid_agent import hybrid_move
 
 BOARD = kgp.Board.parse("<8,0,0,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8>")
 
@@ -19,6 +17,8 @@ BOARD = kgp.Board.parse("<8,0,0,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8>")
 
 
 def player_move(tree, side):
+    '''simulates player move
+        returns new tree and new state'''
     new_tree = copy.deepcopy(tree)
     mymove = None
     while mymove == None :
@@ -67,69 +67,14 @@ def player_move(tree, side):
     return new_tree, new_tree.state
 
 
-def mcts_move(state:kgp.Board, move_time:int, side, tree:searchtree):
-    tree = tree.find_node(state)
-    if tree is None:
-        print("started new tree")
-        tree = searchtree(state, side)
-        tree.simuls = 1
-    N = tree.simuls
-    new_tree = copy.deepcopy(tree)
-    again = True
-
-    while again:
-        best_move = 0
-        end = time.time() + move_time  
-
-        while time.time() < end:
-            new_tree, N, new_best_move = search_monte_carl(new_tree, N, side)
-            if new_best_move != best_move:
-                best_move = new_best_move
-                print(best_move, end=" ")
-                # print(new_tree.state)
-                # print(best_move)
-        print(f"calculated {N} moves")
-        new_tree=new_tree.children[best_move]
-        print(new_tree.side)
-        print(new_tree.state)
-        if new_tree.state.is_final():
-            again = False
-        elif new_tree.side != side:
-            again = False
-        else:
-            print("Calculating another move ...")
-
-    return new_tree, new_tree.state
-
-def minmax_move(state, move_time, side, tree):
-    best_move = -1
-    end = time.time() + move_time  
-    again = True
-    while again:
-        again = False
-        for move in minmax_agent(state, side):
-            if time.time() > end:
-                break
-            print(best_move, end=",")
-            if move != best_move:
-                best_move = move
-                new_state, again = tree.state.sow(side, best_move)
-        if again:
-            print("Calculating another move ...")
-    return tree, new_state
-
-
-
-def hybrid_move(state, move_time, side, tree):
-    if sum(state.north_pits) + sum(state.south_pits) < 20:
-        return minmax_move(state, move_time, side, tree)
-    else:
-        return mcts_move(state, move_time, side, tree)
-
 def play_interactive():
+    '''simulates interactive game between player and bot'''
     tree = searchtree(BOARD, kgp.SOUTH)
     tree.simuls = 1
     time = 3
+
+    myMCTS = MCTS(MCTS.Evaluation.BINARY, MCTS.Effort.RANDOM)
+
 
     while True:
         print(tree.state)
@@ -138,7 +83,7 @@ def play_interactive():
             print("Game ended")
             print(("South won" if state[kgp.SOUTH] - state[kgp.NORTH] > 0 else "North won"))
             break
-        tree, state = mcts_move(tree.state, time, kgp.NORTH, tree)
+        tree, state = mcts_move_arena(myMCTS.search_monte_carl, tree.state, time, kgp.NORTH, tree)
         if state.is_final():
             print("Game ended")
             print(("South won" if state[kgp.SOUTH] - state[kgp.NORTH] > 0 else "North won"))
@@ -147,13 +92,15 @@ def play_interactive():
 
 
 
-def bot_make_move(play_func, name, state, time, side, tree):
-    tree, state = play_func(state, time, side, tree)
+def bot_make_move(play_func, search_func, name, state, time, side, tree):
+    '''wrapper for bot move functions'''
+    tree, state = play_func(search_func, state, time, side, tree)
     print(f"{name}: ")
     print(state)
     return tree, state
 
 def arena():
+    '''simulates 100 games between two bot agents'''
     tree = searchtree(BOARD, kgp.SOUTH)
     state = BOARD
     tree.simuls = 1
@@ -162,10 +109,18 @@ def arena():
     south = 0
     res = 0
     
-    north_player = "hybrid"
-    north_player_func = hybrid_move
+    # north_player = "hybrid"
+    # north_player_search_func = hybrid_move
+    # north_player_play_func = hybrid_move
+
+    myMCTS = MCTS(MCTS.Evaluation.BINARY, MCTS.Effort.GREEDY)
+    north_player = "mcts_greedy"
+    north_player_search_func = myMCTS.search_monte_carl
+    north_player_play_func = mcts_move_arena
+
     south_player = "minmax"
-    south_player_func = minmax_move
+    south_player_search_func = minmax_agent
+    south_player_play_func = minmax_move_arena
 
     print(f"Arena: {north_player} (South) vs. {south_player} (Nort)")
     for i in range(100):
@@ -177,16 +132,17 @@ def arena():
         state = BOARD
         tree.simuls = 1
         while True:
-            tree, state = bot_make_move(north_player_func, north_player, state, time, kgp.NORTH, tree)
+            tree, state = bot_make_move(north_player_play_func, north_player_search_func, north_player, state, time, kgp.NORTH, tree)
             if state.is_final():
                 break
-            tree, state = bot_make_move(south_player_func, south_player, state, time, kgp.SOUTH, tree)
+            tree, state = bot_make_move(south_player_play_func, south_player_search_func, south_player, state, time, kgp.SOUTH, tree)
             if state.is_final():
                 break
         
         res += (1 if (state[kgp.SOUTH] - state[kgp.NORTH]) > 0 else 0)
         north += state[kgp.NORTH]
         south += state[kgp.SOUTH]
+
 
 if __name__ == "__main__":
     # arena()
