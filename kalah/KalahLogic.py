@@ -25,6 +25,7 @@ from threading import Thread, Event
 import multiprocessing as mp
 import copy
 import time
+import numpy as np
 
 try:
     import websocket
@@ -103,7 +104,7 @@ class Board:
         # North kalah, pits, and South kalah combined
         north_row = f"{north_kalah} | {north_pits_row} |"
         south_row = f"| {south_pits_row} | {fmt.format(south_kalah)}"
-        return f"{north_row}\n{" "*(len(str(north_kalah))+1)}{south_row}\n"
+        return f"{north_row}\n{' '*(len(str(north_kalah))+1)}{south_row}\n"
 
     def __getitem__(self, key):
         """
@@ -171,7 +172,7 @@ class Board:
         return not self.is_final()
     
     def is_final(self):
-        return (not self.legal_moves(NORTH)) or (not self.legal_moves(SOUTH))
+        return (not self.get_legal_moves(NORTH)) or (not self.get_legal_moves(SOUTH))
 
     def copy(self):
         """Return a deep copy of the current board state."""
@@ -189,6 +190,15 @@ class Board:
         """Execute a move for SIDE."""
         return self.sow(side, move)
     
+    def asnumpy(self, newtype):
+        """Return a new board with north_pits, north, south_pits, south as np.float64."""
+        if newtype is np.float64:
+            floatboard = np.float64(np.concat([[self.south], [self.north], self.south_pits, self.north_pits]))
+            # floatboard = np.float64([[self.south] + self.south_pits, [self.north] + self.north_pits])
+            # print([[self.north_pits.append(self.north)], [self.south_pits.append(self.south)]])
+            # print(str(floatboard))
+            return floatboard
+
     def sow(self, side, pit, pure=True): 
         """
         Sow the stones from pit on side.
@@ -201,7 +211,7 @@ class Board:
         if pure:
             b = self.copy()
 
-        assert b.is_legal(side, pit)
+        assert b.is_legal(side, pit), f"illegal move: {side}, {pit}, {b}"
 
         me = side
         pos = pit + 1
