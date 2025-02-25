@@ -10,126 +10,118 @@ import kgp
 import numpy as np
 from kgp import Board
 
-#(state, side, move) : new state
-calculated_states = None
-
-def evaluateState(state: Board):
-    return state.south - state.north
-
-def lastSeedToKalah(state: Board, side, move):
-    key = (str(state), side, move)
-    if key not in calculated_states:
-        calculated_states[key] = state.sow(side, move)[0]
-    if calculated_states[key][side] == state[side]+1:
-        return True
-    return False
-        
-#def lastSeedToPit(state: Board, side, move):
-#    if state.pit(side, move) > 0 or state.pit(not side, move) == 0:
-#        return False
-#    for i in range(move+1, state.size):
-#        if state.is_legal(side, i) is False:
-#            continue
-#        key = (str(state), side, i)
-#        if key not in calculated_states:
-#            calculated_states[key] = state.sow(side, i)[0]
-#        if calculated_states[key][side] > state[side]+1:
-#            return True
-#    return False
-    
-def minimax(state: Board, side, depth, alpha=-np.inf, beta=np.inf):
-    moves = state.legal_moves(side)
-    if depth == 0 or not moves:
-        return None, evaluateState(state)
-    best_move = best_value = None
-    if side == kgp.SOUTH:
-        best_value = -np.inf
-        for i in moves:
-            key = (str(state), side, i)
-            if key not in calculated_states:
-                calculated_states[key] = state.sow(side, i)[0]
-            _, value = minimax(calculated_states[key], not side, depth - 1, alpha, beta)
-            if value > best_value:
-                if lastSeedToKalah(state, side, i):
-                    best_value = value + 2
-                else:
-                    best_value = value
-                best_move = i
-            alpha = max(alpha, best_value)
-            if beta is not None and alpha >= beta:
-                return best_move, best_value
-    else:
-        best_value = np.inf
-        for i in moves:
-            key = (str(state), side, i)
-            if key not in calculated_states:
-                calculated_states[key] = state.sow(side, i)[0]
-            _, value = minimax(calculated_states[key], not side, depth - 1, alpha, beta)
-            if value < best_value:
-                if lastSeedToKalah(state, side, i):
-                    best_value = value - 2
-                else:
-                    best_value = value
-                best_move = i
-            beta = min(beta, best_value)
-            if alpha is not None and alpha >= beta:
-                return best_move, best_value
-    return best_move, best_value
+ETA = .8
 
 def agent(state: Board):
-    for i in range(1, 11):
+    #(state, side, move) : new state
+    calculated_states = {}
+    
+    #(state, side, move) : (score, next player)
+    evaluated_moves = {}
+
+
+    def evaluate_state(state: Board, eta=.8):
+        assert 0 <= eta <= 1, 'Eta must be in [0,1]'
+        player = eta * state.south + (1-eta) * sum(state.south_pits)
+        opponent = eta * state.north + (1-eta) * sum(state.north_pits)
+        return player - opponent
+
+
+    def evaluate_move(state: Board, side, move):
+        key = (str(state), side, move)
+        # was evaluation already calculated
+        if key in evaluated_moves:
+            return evaluated_moves[key][0]
+
+        score = 0
+        next_player = not side
+
+        # where will last seed land for given move
+        seeds = state.pit(side, move)
+        landing_pit = (move + seeds) % (state.size*2 + 1)
+
+        # is there a extra move, then return high score
+        # should result in placement in the beginning of sorted move list
+        if landing_pit == state.size:
+            score = 999
+            next_player = side
+        
+        # can seeds be captured, then return capturing value as score
+        elif landing_pit < state.size and state.pit(side, landing_pit) == 0:
+            opposite_pit = state.size - 1 - landing_pit
+            capture_value = state.pit(not side, opposite_pit) + 1
+            score = capture_value
+
+        evaluated_moves[key] = (score, next_player)
+        return score
+    
+
+    def minimax(state: Board, side, depth, alpha=-np.inf, beta=np.inf):
+        # base case
+        legal_moves = state.legal_moves(side)
+        if depth == 0 or not legal_moves:
+            return None, evaluate_state(state, ETA)
+        
+        # evaluate all possible moves and sort them as: extra move, capture seeds, rest
+        # determine the next player for every move on the way
+        moves_with_scores = [(move, evaluate_move(state, side, move)) for move in legal_moves]
+        moves_with_scores.sort(key=lambda x: -x[1])
+        moves = [move for move, _ in moves_with_scores]
+
+        best_move = best_value = None
+
+        # south's turn (maximizing player)
+        if side == kgp.SOUTH:
+            best_value = -np.inf
+            for move in moves:
+                # calculate next state
+                key = (str(state), side, move)
+                if key not in calculated_states:
+                    calculated_states[key] = state.sow(side, move)[0]
+
+                # call minimax for next state and evaluate the result
+                _, value = minimax(calculated_states[key], evaluated_moves[key][1], depth-1, alpha, beta)
+                if value > best_value:
+                    best_value = value
+                    best_move = move
+                
+                # alpha-beta-pruning
+                alpha = max(alpha, best_value)
+                if alpha >= beta:
+                    return best_move, best_value
+
+        # north's turn (minimizing player)
+        else:
+            best_value = np.inf
+            for move in moves:
+                # calculate next state
+                key = (str(state), side, move)
+                if key not in calculated_states:
+                    calculated_states[key] = state.sow(side, move)[0]
+                
+                # call minimax for next state and evaluate the result
+                _, value = minimax(calculated_states[key], evaluated_moves[key][1], depth-1, alpha, beta)
+                if value < best_value:
+                    best_value = value
+                    best_move = move
+
+                # alpha-beta-pruning
+                beta = min(beta, best_value)
+                if alpha >= beta:
+                    return best_move, best_value
+
+        return best_move, best_value
+
+
+    for i in range(1, 15):
         yield minimax(state, kgp.SOUTH, i)[0]
         
-# We can now use the generator function as an agent.  The below
-# configuration will check environmental variables that you can set to
-# modify the behaviour of this agent.  The relevant options are:
-#
-# - USE_WEBSOCKET: Connect to the public practice server instead of
-#   localhost.  You can set this for the duration of your session, to
-#   always connect to the server
-#
-#   $ USE_WEBSOCKET=t export USE_WEBSOCKET
-# 
-#   By default the client will connect to your localhost on port 2761.
-#   Keep in mind that this is the intended behaviour of your final
-#   submission.  
-#
-#   Note that by default kgp.py requires that the "websocket-client"
-#   library (not to be confused with "websockets", that ends with an
-#   "s") has to be installed for Python 3, as the public server is only
-#   accessible over a websocket connection.
-#
-# - TOKEN: A random string used to identify your agent.  Think of it
-#   as password and username in one.  You can generate a satisfyingly
-#   random token in a shell session by running the following command:
-# 
-#   $ tr -cd 'a-z' </dev/urandom | head -c100
-#
-# - NAME: Any name for your agent.  This is mainly to make identifying
-#   it on the website it easier for you.  The name is public and can
-#   be changed whenever the agent connects with the same token.
-#
-# As with everything here (including the library file kgp.py), you are
-# free to change anything.  A more extensive, manual example includes
-# some more agent metadata:
-#
-#     kgp.connect(agent, host    = "wss://kalah.kwarc.info/socket",
-#                        token   = "A hopefully random string only I know",
-#                        authors = ["Eva Lu Ator", "Ben Bitdiddle"],
-#                        name    = "magenta")
-#
-# This will be sent to the server and used to identify a client over
-# multiple connections.  You may leave out the TOKEN keyword, if you
-# wish to stay anonymous, in which case your client will not appear on
-# the website.
 
 #export SSL_CERT_FILE=$(python3 -m certifi)
 
 if __name__ == "__main__":
-    with multiprocessing.Manager() as manager:
-        calculated_states = manager.dict()
-        host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
-        token = 'c+G6YUZAjTqEkQ=='
-        kgp.connect(agent, host=host, token=token, name='pineapplethefruitdude')
+    host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
+    token = 'c+G6YUZAjTqEkQ==kdot'
+    kgp.connect(agent, host=host, token=token, name='NotLikeUs')
 
     
