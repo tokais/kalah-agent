@@ -68,6 +68,7 @@ class Board:
         self.north_pits = north_pits
         self.south_pits = south_pits
         self.size = len(north_pits)
+        self.inverted = False
 
     def __eq__(self, other):
         """True if the same board as OTHER."""
@@ -159,12 +160,35 @@ class Board:
         assert 0 <= pit < self.size
         return self.side(side)[pit]
 
+    def invert(self):
+        self.inverted = not self.inverted
+        self.south = -self.south
+        self.north = -self.north
+        self.south_pits = [-s for s in self.south_pits]
+        self.north_pits = [-n for n in self.north_pits]
+        return self
+
+
     def is_legal(self, side, move):
         """Check if side can make move."""
         return self.pit(side, move) > 0
 
+    def get_legal_moves_with_inverted(self, side):
+        """Return a list of legal moves for side."""
+        was_inverted = self.inverted
+        if self.inverted:
+            self.board = self.invert()
+
+        has_legal_moves = self.get_legal_moves(side)
+
+        if was_inverted:
+            self.board = self.invert()
+        return has_legal_moves
+    
+
     def get_legal_moves(self, side):
         """Return a list of legal moves for side."""
+        
         return [move for move in range(self.size)
                 if self.is_legal(side, move)]
 
@@ -172,7 +196,7 @@ class Board:
         return not self.is_final()
     
     def is_final(self):
-        return (not self.get_legal_moves(NORTH)) or (not self.get_legal_moves(SOUTH))
+        return (not self.get_legal_moves_with_inverted(NORTH)) or (not self.get_legal_moves_with_inverted(SOUTH))
 
     def copy(self):
         """Return a deep copy of the current board state."""
@@ -199,6 +223,18 @@ class Board:
             # print(str(floatboard))
             return floatboard
 
+    def sow_with_invert(self, side, pit, pure=True): 
+
+        was_inverted = self.inverted
+        if self.inverted:
+            self.board = self.invert()
+
+        board, again = self.sow(side, pit, pure)
+
+        if was_inverted:
+            self.board = self.invert()
+        return board, again
+
     def sow(self, side, pit, pure=True): 
         """
         Sow the stones from pit on side.
@@ -207,11 +243,13 @@ class Board:
         indicate a repeat move. To change the state of this object set
         the key pure to False.
         """
+
         b = self
+        
         if pure:
             b = self.copy()
 
-        assert b.is_legal(side, pit), f"illegal move: {side}, {pit}, {b}"
+        assert b.is_legal(side, pit), f"illegal move: {side}, {pit} - \n{b}"
 
         me = side
         pos = pit + 1

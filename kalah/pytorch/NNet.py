@@ -13,6 +13,7 @@ import torch
 import torch.optim as optim
 
 from .KalahNNet import KalahNNet as onnet
+from KalahLogic import Board
 
 args = dotdict({
     'lr': 0.001,
@@ -75,7 +76,7 @@ class NNetWrapper(NeuralNet):
                 total_loss.backward()
                 optimizer.step()
 
-    def predict(self, board):
+    def predict(self, board:Board):
         """
         board: np array with board
         """
@@ -83,7 +84,7 @@ class NNetWrapper(NeuralNet):
         start = time.time()
 
         # preparing input
-        board = torch.FloatTensor(board.astype(np.float64))
+        board = torch.FloatTensor(board.asnumpy(np.float64))
         if args.cuda: board = board.contiguous().cuda()
         board = board.view(1, self.board_x* self.board_y)
         self.nnet.eval()
