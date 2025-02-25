@@ -68,7 +68,7 @@ class Board:
         self.north_pits = north_pits
         self.south_pits = south_pits
         self.size = len(north_pits)
-        self.inverted = False
+        self.active_player = 1
 
     def __eq__(self, other):
         """True if the same board as OTHER."""
@@ -160,43 +160,30 @@ class Board:
         assert 0 <= pit < self.size
         return self.side(side)[pit]
 
-    def invert(self):
-        self.inverted = not self.inverted
-        self.south = -self.south
-        self.north = -self.north
-        self.south_pits = [-s for s in self.south_pits]
-        self.north_pits = [-n for n in self.north_pits]
-        return self
+    # def invert(self):
+    #     self.inverted = not self.inverted
+    #     self.south = -self.south
+    #     self.north = -self.north
+    #     self.south_pits = [-s for s in self.south_pits]
+    #     self.north_pits = [-n for n in self.north_pits]
+    #     return self
 
 
     def is_legal(self, side, move):
         """Check if side can make move."""
         return self.pit(side, move) > 0
 
-    def get_legal_moves_with_inverted(self, side):
-        """Return a list of legal moves for side."""
-        was_inverted = self.inverted
-        if self.inverted:
-            self.board = self.invert()
-
-        has_legal_moves = self.get_legal_moves(side)
-
-        if was_inverted:
-            self.board = self.invert()
-        return has_legal_moves
-    
-
     def get_legal_moves(self, side):
         """Return a list of legal moves for side."""
         
         return [move for move in range(self.size)
-                if self.is_legal(side, move)]
+                if self.is_legal((self.active_player+1)//2, move)]
 
     def has_legal_moves(self):
         return not self.is_final()
     
     def is_final(self):
-        return (not self.get_legal_moves_with_inverted(NORTH)) or (not self.get_legal_moves_with_inverted(SOUTH))
+        return (not self.get_legal_moves(NORTH)) or (not self.get_legal_moves(SOUTH))
 
     def copy(self):
         """Return a deep copy of the current board state."""
@@ -212,28 +199,32 @@ class Board:
 
     def execute_move(self, side, move):
         """Execute a move for SIDE."""
-        return self.sow(side, move)
+        self, again = self.sow((self.active_player+1)//2, move)
+        # handled in the geCanonical in KalahGame
+        if not again: 
+            self.active_player = -self.active_player
+        return self, again
     
     def asnumpy(self, newtype):
         """Return a new board with north_pits, north, south_pits, south as np.float64."""
         if newtype is np.float64:
-            floatboard = np.float64(np.concat([[self.south], [self.north], self.south_pits, self.north_pits]))
+            if self.active_player == -1:
+                floatboard = np.float64(np.concat([
+                    [-self.south], 
+                    [-self.north], 
+                    [-s for s in self.south_pits],
+                    [-n for n in self.north_pits]]))
+            else:
+                floatboard = np.float64(np.concat([
+                    [self.south], 
+                    [self.north], 
+                    self.south_pits, 
+                    self.north_pits]))
             # floatboard = np.float64([[self.south] + self.south_pits, [self.north] + self.north_pits])
             # print([[self.north_pits.append(self.north)], [self.south_pits.append(self.south)]])
             # print(str(floatboard))
             return floatboard
 
-    def sow_with_invert(self, side, pit, pure=True): 
-
-        was_inverted = self.inverted
-        if self.inverted:
-            self.board = self.invert()
-
-        board, again = self.sow(side, pit, pure)
-
-        if was_inverted:
-            self.board = self.invert()
-        return board, again
 
     def sow(self, side, pit, pure=True): 
         """

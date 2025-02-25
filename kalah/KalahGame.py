@@ -13,11 +13,13 @@ Based on the OthelloGame by Surag Nair.
 """
 class KalahGame(Game):
     def __init__(self, state="<8,0,0,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8>"):
+        self.stringState = state
         self.board = Board.parse(state)
 
     def getInitBoard(self):
         # return initial board (numpy board)
         # return np.array(self.board.north_pits + [self.board.north] + self.board.south_pits + [self.board.south])
+        self.board = Board.parse(self.stringState)
         return self.board
     
     def getBoardSize(self):
@@ -37,7 +39,7 @@ class KalahGame(Game):
         # action must be a valid move
 
         # self.board = self.numpyToBoard(board)
-        state, again = board.sow_with_invert((player+1)/2, action)
+        state, again = board.execute_move(player, action)
         self.board = state
         if not again:
             player = -player
@@ -50,9 +52,10 @@ class KalahGame(Game):
         """Get Valid moves for player and board
         returns: a binary vector of length self.getActionSize(), 1 for valid moves, 0 for the others"""
         # return a fixed size binary vector
+        # player is always 1??? when called from predict in NN
 
         # self.board = self.numpyToBoard(board)
-        valids = self.board.get_legal_moves_with_inverted((player+1)/2)
+        valids = self.board.get_legal_moves((player+1)/2)
         valid_mask = [1 if i in valids else 0 for i in range(len(self.board.north_pits))]
         return np.array(valid_mask)
 
@@ -74,11 +77,13 @@ class KalahGame(Game):
 
     def getCanonicalForm(self, board:Board, player):
         # return state if player==1, else return -state if player==-1
-        # return board
-        if player == 1:
-            return board
-        else:
-            return board.invert()
+        # board.active_player = -player
+        return board
+
+        # if player == 1:
+        #     return board
+        # else:
+        #     return board.invert()
 
     def getSymmetries(self, board, pi):
         # cannot create symmetries for Kalah
@@ -86,8 +91,9 @@ class KalahGame(Game):
         return board, pi
 
     def stringRepresentation(self, board):
-        # 8x8 numpy array (canonical board)
-        return str(board)
+        #  used for caching
+
+        return str(board.active_player) + str(board) 
 
     @staticmethod
     def display(board):
