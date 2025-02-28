@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 
 import KalahLogic as kgp
+from KalahLogic import Board
 import math
 import random
 import time
 
+
 def evaluate(state, side=kgp.SOUTH):
     return state[side] - state[not side]
 
-def search(state, depth, side, alpha, beta, max_player_side=kgp.SOUTH):
+def search(state:Board, depth, side, alpha, beta, max_player_side=kgp.SOUTH):
 
     def child(move):
         
         if depth <= 0:
             return (evaluate(state, max_player_side), move)
 
-        after, again = state.sow(side, move)
+        after, again = state.execute_move(side, move)
         if after.is_final():
             return (evaluate(after, max_player_side), move)
         if again:
@@ -82,9 +84,9 @@ def minmax_agent(state, side = kgp.SOUTH, max_player_side=kgp.SOUTH):
     
 
 
-if __name__ == "__main__":
-    board = kgp.Board.parse("<8,0,0,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8>")
-    for move in minmax_agent(board, side=True):    
-        print(move)
+# if __name__ == "__main__":
+#     board = kgp.Board.parse("<8,0,0,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8>")
+#     for move in minmax_agent(board, side=True):    
+#         print(move)
 
 

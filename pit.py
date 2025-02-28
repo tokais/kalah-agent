@@ -1,4 +1,4 @@
-import Arena
+import kalah.Arena as Arena
 from MCTS import MCTS
 from othello.OthelloGame import OthelloGame
 from othello.OthelloPlayers import *

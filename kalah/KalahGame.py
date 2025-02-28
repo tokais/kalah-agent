@@ -91,9 +91,9 @@ class KalahGame(Game):
         return board, pi
 
     def stringRepresentation(self, board):
-        #  used for caching
+        """needs to be unique for each player - is used for chaching"""
 
-        return str(board.active_player) + str(board) 
+        return  str(board) + str(board.active_player)
 
     @staticmethod
     def display(board):

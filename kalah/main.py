@@ -6,7 +6,7 @@ from Coach import Coach
 from KalahGame import KalahGame as Game
 from pytorch.NNet import NNetWrapper as nn
 
-from Arena import Arena
+from kalah.Arena import Arena
 from KalahGame import KalahGame
 import numpy as np
 # from othello.OthelloGame import OthelloGame as Game

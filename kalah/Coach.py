@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 sys.path.append('..')
 
-from Arena import Arena
+from kalah.Arena import Arena
 from kalah.MCTS import MCTS
 
 log = logging.getLogger(__name__)

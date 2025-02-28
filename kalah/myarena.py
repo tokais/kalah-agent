@@ -1,11 +1,15 @@
-from Arena import Arena
+from kalah.Arena import Arena
 from KalahGame import KalahGame as Game
-from KalahLogic import Board
+from KalahLogic import Board, connect
 from utils import *
-from MCTS import MCTS  
+from kalah.MCTS import MCTS  
 from minimax_agent_vince_ordered_moves import minmax_agent
-# from minmax_tobi import agent as minmax_agent
+from minmax_tobi import agent as minmax_agent_tobi
 import time
+import multiprocessing
+# multiprocessing.set_start_method("fork")
+
+
 
 from pytorch.NNet import NNetWrapper as nn
 
@@ -59,29 +63,34 @@ def player_move(board:Board):
        
 
 
-def minmax_move(board:Board, move_time = 100):
-    '''simulates minmax move
-        returns new tree and new state'''
+def minmax_move(board:Board, move_time = 3):
+    '''dont need to rerun bc arena handles again moves'''
     
     side = NORTH
     best_move = -1
     end = time.time() + move_time  
-    again = True
-    while again:
-        again = False
-        for move in minmax_agent(board, side=SOUTH, max_player_side=SOUTH):
-        # for move in minmax_agent(board):
-            if time.time() > end:
-                break
-            print(best_move, end=",")
-            if move != best_move:
-                best_move = move
-                _, again = board.sow(side, best_move)
-        if again:
-            print("Need to Calculating another move ... (dont at moment)")
-            again = False
+
+    # for move in minmax_agent(board, side=NORTH, max_player_side=NORTH):
+    for move in minmax_agent_tobi(board):
+        if time.time() > end:
+            break
+        print(best_move, end=",")
+        if move != best_move:
+            best_move = move
     return best_move
 
+
+def alpha_zero_move(board:Board):
+    g = Game()
+    nnet = nn(g)
+    nnet.load_checkpoint(folder="best_models", filename='best.pth.tar')
+    nmcts = MCTS(g, nnet, args)
+    print(board)
+    for depth in [3000]:
+        move = np.argmax(nmcts.getInstantActionProb(board, depth, temp=0))
+        print(move)
+        print(board.sow(NORTH, move)[0])
+        yield move.item()
 
 def main():
     g = Game()
@@ -99,9 +108,19 @@ def main():
         
 
 
+# if __name__ == "__main__": 
+#     # board = BOARD
+#     # for move in alpha_zero_move(board):
+#     #     print(move)
+#     main()
+
+
+
 if __name__ == "__main__":
-    board = BOARD
-    for move in minmax_agent(board, side=NORTH):    
-        print(move)
-        
-    # main()
+    with multiprocessing.Manager() as manager:
+        calculated_states = manager.dict()
+        host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
+        token = 'Miaumiau'
+        connect(alpha_zero_move, host=host, token=token, name='alphadude')
+
+    

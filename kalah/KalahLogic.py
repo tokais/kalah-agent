@@ -362,7 +362,6 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
     def handle(read, write):
         id = mp.Value('d', 1)
 
-
         def send(cmd, *args, ref=None):
             """
             Send cmd with args to server.
@@ -391,36 +390,34 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
             with id.get_lock():
                 id.value += 2
 
-        def query(state, cid, stop_event):
+        def query(state, cid):
             """
-            Query the agent for moves, with a cooperative stop mechanism.
+            Start querying agent what move to make.
+
+            State is the current board state and cid the ID of the
+            state command that issued the request.
             """
+
             if state.is_final():
                 return
             last = None
             for move in agent(state):
-                if stop_event.is_set():  # Check if the thread should stop
-                    break
                 if not type(move) is int:
                     raise TypeError("Not a move")
                 if move != last:
-                    send("move", move + 1, ref=cid)
+                    send("move", move+1, ref=cid)
                     last = move
             else:
                 send("yield", ref=cid)
 
         threads = {}
-        stop_flags = {}  # Dictionary to store stop flags for each thread
-
 
         def sender():
             while True:
                 write(queue.get())
-        
         threading.Thread(target=sender).start()
 
         for line in read():
-            start_time = time.time()
             if debug:
                 print("<", line.strip(), file=sys.stderr)
 
@@ -452,22 +449,20 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
                     board = args[0]
 
                     if cid in threads:
+                        # Duplicate IDs by the server are ignored
                         continue
 
-                    stop_flags[cid] = Event()  # Create a stop flag for this thread
-                    threads[cid] = Thread(
+                    threads[cid] = mp.Process(
                         name=f'query-{cid}',
-                        target=query,
-                        args=(board, cid, stop_flags[cid])
-                    )
+                        args=(board, cid),
+                        target=query)
                     threads[cid].start()
-                    
                 elif cmd == "stop":
                     if ref and ref in threads:
-                        stop_flags[ref].set()  # Signal the thread to stop
-                        threads[ref].join()  # Wait for the thread to finish
+                        thread = threads[ref]
+                        thread.kill()
+                        thread.join()
                         threads.pop(ref, None)
-                        stop_flags.pop(ref, None)
                 elif cmd == "ok":
                     pass    # ignored
                 elif cmd == "error":
@@ -477,8 +472,6 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
                         send("pong", args[0], ref=cid)
                     else:
                         send("pong", ref=cid)
-                    end_time = time.time()
-                    print(f"PING: {((end_time -start_time)*1000):.4f} ms, {start_time}")
                 elif cmd == "goodbye":
                     return
             except ValueError:
@@ -490,8 +483,11 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
         assert 'websocket' in sys.modules,\
             "websocket library couldn't be loaded"
 
+        #ssl_context = ssl.create_default_context()
+        #ssl_context.load_verify_locations(certifi.where())
+
         ws = websocket.WebSocket(enable_multithread=True)
-        ws.connect(host)
+        ws.connect(host)#, ssl=ssl_context)
         def lines():
             try:
                 while True:
@@ -505,19 +501,11 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
             sock.connect((host, port))
             with sock.makefile(mode='rw') as pseudo:
                 def write(msg):
-                    try:
-                        pseudo.write(msg)
-                        pseudo.flush()
-                    except BrokenPipeError:
-                        print("Connection closed by the server.", file=sys.stderr)
-                        return
+                    pseudo.write(msg)
+                    pseudo.flush()
                 handle(lambda: pseudo, write)
 
 # Local Variables:
 # indent-tabs-mode: nil
 # tab-width: 4
 # End:
-
-
-
-

@@ -6,9 +6,9 @@
 import multiprocessing
 multiprocessing.set_start_method("fork")
 
-import kgp
+import KalahLogic as kgp
 import numpy as np
-from kgp import Board
+from KalahLogic import Board
 
 ETA = .8
 
@@ -86,7 +86,7 @@ def agent(state: Board):
                 # calculate next state
                 key = (str(state), side, move)
                 if key not in calculated_states:
-                    calculated_states[key] = state.sow(side, move)[0]
+                    calculated_states[key] = state.execute_move(side, move)[0]
 
                 # call minimax for next state and evaluate the result
                 _, value = minimax(calculated_states[key], evaluated_moves[key][1], max_depth, depth+1, alpha, beta)
@@ -106,7 +106,7 @@ def agent(state: Board):
                 # calculate next state
                 key = (str(state), side, move)
                 if key not in calculated_states:
-                    calculated_states[key] = state.sow(side, move)[0]
+                    calculated_states[key] = state.execute_move(side, move)[0]
                 
                 # call minimax for next state and evaluate the result
                 _, value = minimax(calculated_states[key], evaluated_moves[key][1], max_depth, depth+1, alpha, beta)
