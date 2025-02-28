@@ -12,3 +12,7 @@ checkpoints/
 .idea/
 
 venv/*
+kalah/KalahGame.py
+temp_othello
+kalah/kgp.py
+best_models/best.pth.tar

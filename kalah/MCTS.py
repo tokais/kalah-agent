@@ -89,6 +89,19 @@ class MCTS():
             valids = self.game.getValidMoves(canonicalBoard, 1)
             self.Ps[s] = self.Ps[s] * valids  # masking invalid moves
             sum_Ps_s = np.sum(self.Ps[s])
+
+
+            ## DEBUG
+            if canonicalBoard.active_player == 1:
+                temp = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
+                temp2 = valids == temp
+                if temp2.all() == False:
+                    print("ERROR")
+            else:
+                temp = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
+                temp2 = valids == temp
+                if temp2.all() == False:
+                    print("ERROR")
             if sum_Ps_s > 0:
                 self.Ps[s] /= sum_Ps_s  # renormalize
             else:
@@ -107,6 +120,18 @@ class MCTS():
         valids = self.Vs[s]
         cur_best = -float('inf')
         best_act = -1
+
+                ## DEBUG
+        if canonicalBoard.active_player == 1:
+            temp = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
+            temp2 = valids == temp
+            if temp2.all() == False:
+                print("ERROR")
+        else:
+            temp = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
+            temp2 = valids == temp
+            if temp2.all() == False:
+                print("ERROR")
 
         # pick the action with the highest upper confidence bound
         for a in range(self.game.getActionSize()):

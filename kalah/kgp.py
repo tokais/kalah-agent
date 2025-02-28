@@ -1,19 +1,20 @@
-'''
-Board class for the game of TicTacToe.
-Default board size is 3x3.
-Board data:
-  1=white(O), -1=black(X), 0=empty
-  first dim is column , 2nd is row:
-     pieces[0][0] is the top left square,
-     pieces[2][0] is the bottom left square,
-Squares are stored and manipulated as (x,y) tuples.
+# KALAH GAME PROTOCOL LIBRARY                    -*- mode: python; -*-
 
-Author: Evgeny Tyurin, github.com/evg-tyurin
-Date: Jan 5, 2018.
+# Copyright 2021, 2022, Philip Kaludercic
 
-Based on the board for the game of Othello by Eric P. Nichols.
+# Permission to use, copy, modify, and/or distribute this software for
+# any purpose with or without fee is hereby granted, provided that the
+# above  copyright notice  and this  permission notice  appear in  all
+# copies.
 
-'''
+# THE  SOFTWARE IS  PROVIDED  "AS  IS" AND  THE  AUTHOR DISCLAIMS  ALL
+# WARRANTIES  WITH  REGARD  TO  THIS SOFTWARE  INCLUDING  ALL  IMPLIED
+# WARRANTIES OF  MERCHANTABILITY AND  FITNESS. IN  NO EVENT  SHALL THE
+# AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+# DAMAGES OR ANY  DAMAGES WHATSOEVER RESULTING FROM LOSS  OF USE, DATA
+# OR PROFITS,  WHETHER IN AN  ACTION OF CONTRACT, NEGLIGENCE  OR OTHER
+# TORTIOUS ACTION,  ARISING OUT OF  OR IN  CONNECTION WITH THE  USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
 import inspect
 import re
@@ -21,11 +22,8 @@ import os
 import sys
 import socket
 import threading
-from threading import Thread, Event
 import multiprocessing as mp
 import copy
-import time
-import numpy as np
 
 try:
     import websocket
@@ -68,7 +66,6 @@ class Board:
         self.north_pits = north_pits
         self.south_pits = south_pits
         self.size = len(north_pits)
-        self.active_player = 1
 
     def __eq__(self, other):
         """True if the same board as OTHER."""
@@ -85,27 +82,7 @@ class Board:
                 *self.south_pits,
                 *self.north_pits]
 
-    
-        n = self.size
-        south_kalah = self.south
-        north_kalah = self.north
-        south_pits = self.south_pits
-        north_pits = self.north_pits
-
-        # Build the ASCII representation
-        board_width = len(str(max(max(north_pits), max(south_pits))))  # Width of the widest number for formatting
-        fmt = f"{{:^{board_width}}}"  # Centered formatting template for numbers
-
-        # North pits row
-        north_pits_row = " ".join(fmt.format(stones) for stones in reversed(north_pits))
-
-        # South pits row
-        south_pits_row = " ".join(fmt.format(stones) for stones in south_pits)
-
-        # North kalah, pits, and South kalah combined
-        north_row = f"{north_kalah} | {north_pits_row} |"
-        south_row = f"| {south_pits_row} | {fmt.format(south_kalah)}"
-        return f"{north_row}\n{' '*(len(str(north_kalah))+1)}{south_row}\n"
+        return '<{}>'.format(','.join(map(str, data)))
 
     def __getitem__(self, key):
         """
@@ -142,13 +119,9 @@ class Board:
             side, pit = key
             self.side(side)[pit] = value
 
-    def all_pits(self):
-        """Return all pits."""
-        return self.north_pits + self.south_pits
-
     def side(self, side):
         """Return the pits for SIDE."""
-        assert side in (NORTH, SOUTH), f"{side} is not a valid side"
+        assert side in (NORTH, SOUTH)
 
         if side == NORTH:
             return self.north_pits
@@ -160,34 +133,17 @@ class Board:
         assert 0 <= pit < self.size
         return self.side(side)[pit]
 
-    # def invert(self):
-    #     self.inverted = not self.inverted
-    #     self.south = -self.south
-    #     self.north = -self.north
-    #     self.south_pits = [-s for s in self.south_pits]
-    #     self.north_pits = [-n for n in self.north_pits]
-    #     return self
-
-
     def is_legal(self, side, move):
         """Check if side can make move."""
         return self.pit(side, move) > 0
 
     def legal_moves(self, side):
         """Return a list of legal moves for side."""
-        return self.get_legal_moves(side)
-
-    def get_legal_moves(self, side):
-        """Return a list of legal moves for side."""
-        
         return [move for move in range(self.size)
-                if self.is_legal((self.active_player+1)//2, move)]
+                if self.is_legal(side, move)]
 
-    def has_legal_moves(self):
-        return not self.is_final()
-    
     def is_final(self):
-        return (not self.get_legal_moves(NORTH)) or (not self.get_legal_moves(SOUTH))
+        return (not self.legal_moves(NORTH)) or (not self.legal_moves(SOUTH))
 
     def copy(self):
         """Return a deep copy of the current board state."""
@@ -201,36 +157,7 @@ class Board:
 
         return self, False
 
-    def execute_move(self, side, move):
-        """Execute a move for SIDE."""
-        b, again = self.sow((self.active_player+1)//2, move)
-        # handled in the geCanonical in KalahGame
-        if not again: 
-            b.active_player = -b.active_player
-        return b, again
-    
-    def asnumpy(self, newtype):
-        """Return a new board with north_pits, north, south_pits, south as np.float64."""
-        if newtype is np.float64:
-            if self.active_player == -1:
-                floatboard = np.float64(np.concat([
-                    [-self.south], 
-                    [-self.north], 
-                    [-s for s in self.south_pits],
-                    [-n for n in self.north_pits]]))
-            else:
-                floatboard = np.float64(np.concat([
-                    [self.south], 
-                    [self.north], 
-                    self.south_pits, 
-                    self.north_pits]))
-            # floatboard = np.float64([[self.south] + self.south_pits, [self.north] + self.north_pits])
-            # print([[self.north_pits.append(self.north)], [self.south_pits.append(self.south)]])
-            # print(str(floatboard))
-            return floatboard
-
-
-    def sow(self, side, pit, pure=True): 
+    def sow(self, side, pit, pure=True):
         """
         Sow the stones from pit on side.
 
@@ -238,13 +165,11 @@ class Board:
         indicate a repeat move. To change the state of this object set
         the key pure to False.
         """
-
         b = self
-        
         if pure:
             b = self.copy()
 
-        assert b.is_legal(side, pit), f"illegal move: {side}, {pit} - \n{b}"
+        assert b.is_legal(side, pit)
 
         me = side
         pos = pit + 1
@@ -362,7 +287,6 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
     def handle(read, write):
         id = mp.Value('d', 1)
 
-
         def send(cmd, *args, ref=None):
             """
             Send cmd with args to server.
@@ -391,36 +315,34 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
             with id.get_lock():
                 id.value += 2
 
-        def query(state, cid, stop_event):
+        def query(state, cid):
             """
-            Query the agent for moves, with a cooperative stop mechanism.
+            Start querying agent what move to make.
+
+            State is the current board state and cid the ID of the
+            state command that issued the request.
             """
+
             if state.is_final():
                 return
             last = None
             for move in agent(state):
-                if stop_event.is_set():  # Check if the thread should stop
-                    break
                 if not type(move) is int:
                     raise TypeError("Not a move")
                 if move != last:
-                    send("move", move + 1, ref=cid)
+                    send("move", move+1, ref=cid)
                     last = move
             else:
                 send("yield", ref=cid)
 
         threads = {}
-        stop_flags = {}  # Dictionary to store stop flags for each thread
-
 
         def sender():
             while True:
                 write(queue.get())
-        
         threading.Thread(target=sender).start()
 
         for line in read():
-            start_time = time.time()
             if debug:
                 print("<", line.strip(), file=sys.stderr)
 
@@ -452,22 +374,20 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
                     board = args[0]
 
                     if cid in threads:
+                        # Duplicate IDs by the server are ignored
                         continue
 
-                    stop_flags[cid] = Event()  # Create a stop flag for this thread
-                    threads[cid] = Thread(
+                    threads[cid] = mp.Process(
                         name=f'query-{cid}',
-                        target=query,
-                        args=(board, cid, stop_flags[cid])
-                    )
+                        args=(board, cid),
+                        target=query)
                     threads[cid].start()
-                    
                 elif cmd == "stop":
                     if ref and ref in threads:
-                        stop_flags[ref].set()  # Signal the thread to stop
-                        threads[ref].join()  # Wait for the thread to finish
+                        thread = threads[ref]
+                        thread.kill()
+                        thread.join()
                         threads.pop(ref, None)
-                        stop_flags.pop(ref, None)
                 elif cmd == "ok":
                     pass    # ignored
                 elif cmd == "error":
@@ -477,8 +397,6 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
                         send("pong", args[0], ref=cid)
                     else:
                         send("pong", ref=cid)
-                    end_time = time.time()
-                    print(f"PING: {((end_time -start_time)*1000):.4f} ms, {start_time}")
                 elif cmd == "goodbye":
                     return
             except ValueError:
@@ -490,8 +408,11 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
         assert 'websocket' in sys.modules,\
             "websocket library couldn't be loaded"
 
+        #ssl_context = ssl.create_default_context()
+        #ssl_context.load_verify_locations(certifi.where())
+
         ws = websocket.WebSocket(enable_multithread=True)
-        ws.connect(host)
+        ws.connect(host)#, ssl=ssl_context)
         def lines():
             try:
                 while True:
@@ -505,19 +426,11 @@ def connect(agent, host='wss://kalah.kwarc.info/socket', port=2671, token=None, 
             sock.connect((host, port))
             with sock.makefile(mode='rw') as pseudo:
                 def write(msg):
-                    try:
-                        pseudo.write(msg)
-                        pseudo.flush()
-                    except BrokenPipeError:
-                        print("Connection closed by the server.", file=sys.stderr)
-                        return
+                    pseudo.write(msg)
+                    pseudo.flush()
                 handle(lambda: pseudo, write)
 
 # Local Variables:
 # indent-tabs-mode: nil
 # tab-width: 4
 # End:
-
-
-
-

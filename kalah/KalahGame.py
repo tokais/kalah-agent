@@ -40,11 +40,11 @@ class KalahGame(Game):
 
         # self.board = self.numpyToBoard(board)
         state, again = board.execute_move(player, action)
-        self.board = state
+        # self.board = state
         if not again:
             player = -player
         
-        return (self.board, player)
+        return (state, player)
 
 
 
@@ -55,8 +55,8 @@ class KalahGame(Game):
         # player is always 1??? when called from predict in NN
 
         # self.board = self.numpyToBoard(board)
-        valids = self.board.get_legal_moves((player+1)/2)
-        valid_mask = [1 if i in valids else 0 for i in range(len(self.board.north_pits))]
+        valids = board.get_legal_moves((player+1)/2)
+        valid_mask = [1 if i in valids else 0 for i in range(len(board.north_pits))]
         return np.array(valid_mask)
 
     def getGameEnded(self, board, player):
@@ -64,10 +64,10 @@ class KalahGame(Game):
         # player = 1
         # self.board = self.numpyToBoard(board)
         player = (player + 1)//2 # 1 -> 2, -1 -> 0
-        if self.board.is_final():
-            if (self.board[player] > self.board[not player]):
+        if board.is_final():
+            if (board[player] > board[not player]):
                 return 1
-            elif (self.board[player] < self.board[not player]):
+            elif (board[player] < board[not player]):
                 return -1
             else:
                 return 1e-4 

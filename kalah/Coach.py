@@ -61,6 +61,7 @@ class Coach():
             temp = int(episodeStep < self.args.tempThreshold)
 
             pi = self.mcts.getActionProb(canonicalBoard, temp=temp)
+            trainExamples.append([canonicalBoard, self.curPlayer, pi, None])
             # sym = self.game.getSymmetries(canonicalBoard, pi)
             # for b, p in sym:
             #     trainExamples.append([b, self.curPlayer, p, None])
@@ -71,6 +72,7 @@ class Coach():
             r = self.game.getGameEnded(board, self.curPlayer)
 
             if r != 0:
+                debugg = [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer))) for x in trainExamples]
                 return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer))) for x in trainExamples]
 
     def learn(self):
@@ -86,7 +88,7 @@ class Coach():
             # bookkeeping
             log.info(f'Starting Iter #{i} ...')
             # examples of the iteration
-            if not self.skipFirstSelfPlay or i > 1:
+            if not self.skipFirstSelfPlay:# or i > 1:
                 iterationTrainExamples = deque([], maxlen=self.args.maxlenOfQueue)
 
                 for _ in tqdm(range(self.args.numEps), desc="Self Play"):
@@ -112,6 +114,8 @@ class Coach():
 
             # training new network, keeping a copy of the old one
             self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+
+
             self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
             pmcts = MCTS(self.game, self.pnet, self.args)
 
@@ -121,6 +125,7 @@ class Coach():
             log.info('PITTING AGAINST PREVIOUS VERSION')
             arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
                           lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
+            
             pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
 
             log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
@@ -160,3 +165,30 @@ class Coach():
 
             # examples based on the model were already collected (loaded)
             self.skipFirstSelfPlay = True
+
+    def testArena(self):
+        self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+
+        self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+        pmcts = MCTS(self.game, self.pnet, self.args)
+
+        trainExamples = self.loadTrainExamples()
+        self.nnet.train(trainExamples)
+        nmcts = MCTS(self.game, self.nnet, self.args)
+
+        log.info('PITTING AGAINST PREVIOUS VERSION')
+        arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
+                        lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
+        
+        pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
+
+        log.info('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
+        if pwins + nwins == 0 or float(nwins) / (pwins + nwins) < self.args.updateThreshold:
+            log.info('REJECTING NEW MODEL')
+            self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+        else:
+            log.info('ACCEPTING NEW MODEL')
+            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename=self.getCheckpointFile(i))
+            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='best.pth.tar')
+
+
