@@ -1,6 +1,6 @@
 import logging
 import math
-from src.kalah.pytorch.NNetWrapper import NNetWrapper as nn
+from kalah.pytorch.NNetWrapper import NNetWrapper as nn
 from kalah.KalahGame import KalahGame as kalahGame
 
 import numpy as np
