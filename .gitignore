@@ -12,7 +12,10 @@ checkpoints/
 .idea/
 
 venv/*
+vscode/*
 kalah/KalahGame.py
 temp_othello
 kalah/kgp.py
-best_models/best.pth.tar
+best_models/
+docker
+train_examples/*

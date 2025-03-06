@@ -1,6 +1,6 @@
 import sys
 sys.path.append('..')
-from utils import *
+from src.utils import *
 
 import argparse
 import torch
@@ -16,10 +16,10 @@ class KalahNNet(nn.Module):
         self.args = args
 
         super(KalahNNet, self).__init__()
-        self.fc1 = nn.Linear(self.board_x * self.board_y, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512, self.action_size)
-        self.fc4 = nn.Linear(512, 1)
+        self.fc1 = nn.Linear(self.board_x * self.board_y, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, self.action_size)
+        self.fc4 = nn.Linear(64, 1)
 
 
     def forward(self, s):

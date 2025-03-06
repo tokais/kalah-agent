@@ -1,20 +1,3 @@
-'''
-Board class for the game of TicTacToe.
-Default board size is 3x3.
-Board data:
-  1=white(O), -1=black(X), 0=empty
-  first dim is column , 2nd is row:
-     pieces[0][0] is the top left square,
-     pieces[2][0] is the bottom left square,
-Squares are stored and manipulated as (x,y) tuples.
-
-Author: Evgeny Tyurin, github.com/evg-tyurin
-Date: Jan 5, 2018.
-
-Based on the board for the game of Othello by Eric P. Nichols.
-
-'''
-
 import inspect
 import re
 import os
@@ -142,10 +125,6 @@ class Board:
             side, pit = key
             self.side(side)[pit] = value
 
-    def all_pits(self):
-        """Return all pits."""
-        return self.north_pits + self.south_pits
-
     def side(self, side):
         """Return the pits for SIDE."""
         assert side in (NORTH, SOUTH), f"{side} is not a valid side"
@@ -160,34 +139,18 @@ class Board:
         assert 0 <= pit < self.size
         return self.side(side)[pit]
 
-    # def invert(self):
-    #     self.inverted = not self.inverted
-    #     self.south = -self.south
-    #     self.north = -self.north
-    #     self.south_pits = [-s for s in self.south_pits]
-    #     self.north_pits = [-n for n in self.north_pits]
-    #     return self
-
-
     def is_legal(self, side, move):
         """Check if side can make move."""
         return self.pit(side, move) > 0
 
     def legal_moves(self, side):
         """Return a list of legal moves for side."""
-        return self.get_legal_moves(side)
-
-    def get_legal_moves(self, side):
-        """Return a list of legal moves for side."""
         
         return [move for move in range(self.size)
                 if self.is_legal((self.active_player+1)//2, move)]
-
-    def has_legal_moves(self):
-        return not self.is_final()
     
     def is_final(self):
-        return (not self.get_legal_moves(NORTH)) or (not self.get_legal_moves(SOUTH))
+        return (not self.legal_moves(NORTH)) or (not self.legal_moves(SOUTH))
 
     def copy(self):
         """Return a deep copy of the current board state."""
@@ -204,7 +167,6 @@ class Board:
     def execute_move(self, side, move):
         """Execute a move for SIDE."""
         b, again = self.sow((self.active_player+1)//2, move)
-        # handled in the geCanonical in KalahGame
         if not again: 
             b.active_player = -b.active_player
         return b, again

@@ -3,8 +3,8 @@ import os
 import sys
 from collections import deque
 from pickle import Pickler, Unpickler
-from KalahGame import KalahGame
-from kalah.pytorch.NNet import NNetWrapper
+from kalah.KalahGame import KalahGame
+from src.kalah.pytorch.NNetWrapper import NNetWrapper
 
 from random import shuffle
 
@@ -13,8 +13,8 @@ from tqdm import tqdm
 
 sys.path.append('..')
 
-from kalah.Arena import Arena
-from kalah.MCTS import MCTS
+from Arena import Arena
+from MCTS import MCTS
 
 log = logging.getLogger(__name__)
 

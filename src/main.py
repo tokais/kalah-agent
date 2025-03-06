@@ -3,15 +3,15 @@ import logging
 import coloredlogs
 
 from Coach import Coach
-from KalahGame import KalahGame as Game
-from pytorch.NNet import NNetWrapper as nn
+from kalah.KalahGame import KalahGame as Game
+from src.kalah.pytorch.NNetWrapper import NNetWrapper as nn
 
-from kalah.Arena import Arena
-from KalahGame import KalahGame
+from Arena import Arena
+from kalah.KalahGame import KalahGame
 import numpy as np
 # from othello.OthelloGame import OthelloGame as Game
 # from othello.pytorch.NNet import NNetWrapper as nn
-from utils import *
+from src.utils import *
 
 log = logging.getLogger(__name__)
 
@@ -59,21 +59,9 @@ def main():
     c.learn()
 
 def testArena():
-    log.info('Loading %s...', Game.__name__)
     g = Game()
-
-    log.info('Loading %s...', nn.__name__)
     nnet = nn(g)
-
-    if args.load_model:
-        log.info('Loading checkpoint "%s/%s"...', args.load_folder_file[0], args.load_folder_file[1])
-        nnet.load_checkpoint(args.load_folder_file[0], args.load_folder_file[1])
-    else:
-        log.warning('Not loading a checkpoint!')
-
-    log.info('Loading the Coach...')
     c = Coach(g, nnet, args)
-
     c.testArena()
 
 

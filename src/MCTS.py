@@ -1,8 +1,7 @@
 import logging
 import math
-from NeuralNet import NeuralNet
-from pytorch.NNet import NNetWrapper as nn
-from KalahGame import KalahGame as kalahGame
+from src.kalah.pytorch.NNetWrapper import NNetWrapper as nn
+from kalah.KalahGame import KalahGame as kalahGame
 
 import numpy as np
 
@@ -125,12 +124,12 @@ class MCTS():
                 temp = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
                 temp2 = valids == temp
                 if temp2.all() == False:
-                    print("ERROR")
+                    print("ERROR1")
             else:
                 temp = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
                 temp2 = valids == temp
                 if temp2.all() == False:
-                    print("ERROR")
+                    print("ERROR2")
             if sum_Ps_s > 0:
                 self.Ps[s] /= sum_Ps_s  # renormalize
             else:
@@ -155,12 +154,12 @@ class MCTS():
             temp = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
             temp2 = valids == temp
             if temp2.all() == False:
-                print("ERROR")
+                print("ERROR3")
         else:
             temp = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
             temp2 = valids == temp
             if temp2.all() == False:
-                print("ERROR")
+                print("ERROR4")
 
         # pick the action with the highest upper confidence bound
         for a in range(self.game.getActionSize()):
