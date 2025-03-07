@@ -6,14 +6,16 @@ import numpy as np
 from tqdm import tqdm
 
 sys.path.append('../../')
+sys.path.append('..')
+
 from src.utils import *
-from NeuralNet import NeuralNet
+from src.NeuralNet import NeuralNet
 
 import torch
 import torch.optim as optim
 
-from .KalahNNet import KalahNNet as onnet
-from KalahLogic import Board
+from .KalahNNet import KalahNNet
+from kalah.KalahLogic import Board
 
 args = dotdict({
     'lr': 0.001,
@@ -26,8 +28,8 @@ args = dotdict({
 
 
 class NNetWrapper(NeuralNet):
-    def __init__(self, game):
-        self.nnet = onnet(game, args)
+    def __init__(self, kalahnnet, game):
+        self.nnet = kalahnnet(game, args)
         self.board_x, self.board_y = game.getBoardSize()
         self.action_size = game.getActionSize()
 
@@ -48,7 +50,7 @@ class NNetWrapper(NeuralNet):
 
             batch_count = int(len(examples) / args.batch_size)
 
-            t = tqdm(range(batch_count), desc='Training Net')
+            t = tqdm(range(batch_count), desc='Training Net', disable=True)
             for _ in t:
                 sample_ids = np.random.randint(len(examples), size=args.batch_size)
                 boards, pis, vs = list(zip(*[examples[i] for i in sample_ids]))

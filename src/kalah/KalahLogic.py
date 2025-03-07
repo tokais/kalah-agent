@@ -1,13 +1,14 @@
-import inspect
-import re
-import os
-import sys
-import socket
-import threading
-from threading import Thread, Event
-import multiprocessing as mp
 import copy
+import inspect
+import multiprocessing as mp
+import os
+import re
+import socket
+import sys
+import threading
 import time
+from threading import Event, Thread
+
 import numpy as np
 
 try:
@@ -149,8 +150,13 @@ class Board:
         return [move for move in range(self.size)
                 if self.is_legal((self.active_player+1)//2, move)]
     
+    # def is_final(self):
+    #     return (not self.legal_moves(NORTH)) or (not self.legal_moves(SOUTH))
     def is_final(self):
-        return (not self.legal_moves(NORTH)) or (not self.legal_moves(SOUTH))
+        n = sum(self.north_pits)
+        s = sum(self.south_pits)
+
+        return n == 0 or s == 0 or n + s < abs(self.north - self.south)
 
     def copy(self):
         """Return a deep copy of the current board state."""

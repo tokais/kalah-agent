@@ -5,6 +5,7 @@ from collections import deque
 from pickle import Pickler, Unpickler
 from kalah.KalahGame import KalahGame
 from src.kalah.pytorch.NNetWrapper import NNetWrapper
+from src.kalah.pytorch.KalahNNet import KalahNNet, KalahNNet_128res
 
 from random import shuffle
 
@@ -28,7 +29,7 @@ class Coach():
     def __init__(self, game:KalahGame, nnet:NNetWrapper, args):
         self.game = game
         self.nnet = nnet
-        self.pnet = self.nnet.__class__(self.game)  # the competitor network
+        self.pnet = self.nnet.__class__(KalahNNet_128res, self.game)  # the competitor network
         self.args = args
         self.mcts = MCTS(self.game, self.nnet, self.args)
         self.trainExamplesHistory = []  # history of examples from args.numItersForTrainExamplesHistory latest iterations

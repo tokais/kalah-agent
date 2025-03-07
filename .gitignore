@@ -19,3 +19,4 @@ kalah/kgp.py
 best_models/
 docker
 train_examples/*
+temp_128res/

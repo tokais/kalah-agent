@@ -1,14 +1,15 @@
-from Arena import Arena
-from KalahGame import KalahGame as Game
-from KalahLogic import Board, connect
-from src.utils import *
-from MCTS import MCTS  
-from minimax_agent_vince_ordered_moves import minmax_agent
-from minmax_tobi import agent as minmax_agent_tobi
-import time
 import multiprocessing
-from src.kalah.pytorch.NNetWrapper import NNetWrapper as nn
+import time
+
 import numpy as np
+
+from kalah.KalahGame import KalahGame
+from kalah.KalahLogic import Board, connect
+from kalah.KalahPlayers import minmax_tobi, minmax_vince
+from src.Arena import Arena
+from src.kalah.pytorch.NNetWrapper import NNetWrapper
+from src.MCTS import MCTS
+from src.utils import *
 
 NORTH = True
 SOUTH = not NORTH
@@ -70,7 +71,7 @@ class minmax_move:
         end = time.time() + self.move_time  
 
         # for move in minmax_agent(board, side=NORTH, max_player_side=NORTH):
-        for move in minmax_agent_tobi(board):
+        for move in minmax_tobi(board):
             if time.time() > end:
                 break
             print(best_move, end=",")
@@ -82,7 +83,7 @@ class minmax_move:
 class alpha_zero_move:
     def __init__(self, filename='best.pth.tar'):
         self.filename = filename
-        g = Game()
+        g = KalahGame()
         nnet = nn(g)
         nnet.load_checkpoint(folder="best_models", filename=self.filename)
         self.nmcts = MCTS(g, nnet, args)
@@ -107,34 +108,29 @@ class alpha_zero_move:
         print(f"Opponent chose: {action+1}")
 
 
-
 def main():
-    g = Game()
+    g = KalahGame()
     arena = Arena(player1=minmax_move(move_time=3), 
                 player2=alpha_zero_move(filename='best_64.pth.tar'),
                 game=g, 
                 display=g.display)
     
-    minmax_wins, alpha_zero_wins, draws = arena.playGames(2, verbose=True)
+    minmax_wins, alpha_zero_wins, draws = arena.playGames(10, verbose=True)
     print("minmax_wins", minmax_wins)
     print("alpha_zero_wins", alpha_zero_wins)
     print("draws", draws)
 
 
-
-# if __name__ == "__main__": 
-#     main()
-    # board = BOARD
-    # for move in alpha_zero_move(board):
-    #     print(move)
-
+if __name__ == "__main__": 
+    main()
+    board = BOARD
+    for move in alpha_zero_move(board):
+        print(move)
 
 
-if __name__ == "__main__":
-    with multiprocessing.Manager() as manager:
-        calculated_states = manager.dict()
-        host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
-        token = 'Miaumiau'
-        connect(alpha_zero_move(filename='best_64.pth.tar').get_move, host=host, token=token, name='alphadude', debug=True)
-
-    
+# if __name__ == "__main__":
+#     with multiprocessing.Manager() as manager:
+#         calculated_states = manager.dict()
+#         host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
+#         token = 'Miaumiau'
+#         connect(alpha_zero_move(filename='best_64.pth.tar').get_move, host=host, token=token, name='alphadude', debug=True)

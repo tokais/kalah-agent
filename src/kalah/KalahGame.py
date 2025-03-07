@@ -1,8 +1,8 @@
 from __future__ import print_function
 import sys
 sys.path.append('..')
-from Game import Game
-from KalahLogic import Board
+from src.Game import Game
+from .KalahLogic import Board
 import numpy as np
 
 """

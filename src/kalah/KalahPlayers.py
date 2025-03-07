@@ -1,7 +1,7 @@
 import numpy as np
 
-import KalahLogic as kgp
-from KalahLogic import Board
+import kalah.KalahLogic as kgp
+from kalah.KalahLogic import Board
 import math
 import random
 import time
