@@ -1,10 +1,15 @@
 import numpy as np
 
-import kalah.KalahLogic as kgp
-from kalah.KalahLogic import Board
+import src.kalah.kgp as kgp
+from src.kalah.KalahLogic import Board
 import math
 import random
 import time
+from src.kalah.KalahGame import KalahGame
+from src.kalah.pytorch.NNetWrapper import NNetWrapper
+from src.kalah.pytorch.KalahNNet import KalahNNet_128res
+from src.MCTS import MCTS
+from src.utils import dotdict
 
 """
 Random and Human-ineracting players for the game of TicTacToe.
@@ -26,33 +31,7 @@ class RandomPlayer():
             a = np.random.randint(self.game.getActionSize())
         return a
 
-
-class HumanTicTacToePlayer():
-    def __init__(self, game):
-        self.game = game
-
-    def play(self, board):
-        # display(board)
-        valid = self.game.getValidMoves(board, 1)
-        for i in range(len(valid)):
-            if valid[i]:
-                print(int(i/self.game.n), int(i%self.game.n))
-        while True: 
-            # Python 3.x
-            a = input()
-            # Python 2.x 
-            # a = raw_input()
-
-            x,y = [int(x) for x in a.split(' ')]
-            a = self.game.n * x + y if x!= -1 else self.game.n ** 2
-            if valid[a]:
-                break
-            else:
-                print('Invalid')
-
-        return a
-
-class minmax_vince:
+class minmax_vince_player:
     def evaluate(state, side=kgp.SOUTH):
         return state[side] - state[not side]
 
@@ -118,7 +97,7 @@ class minmax_vince:
             yield res
 
 
-class minmax_tobi:
+class minmax_tobi_player:
     def __init__(self):
         self.ETA = 0.8
 
@@ -239,12 +218,100 @@ class minmax_tobi:
         for i in range(1, 20):
             yield minimax(state, kgp.SOUTH, i)[0]
             
+class human_player:
+    def __call__(self, board:Board):
+        '''simulates player move
+            returns new tree and new state'''
+        mymove = None
+        side = True
+        while mymove == None :
+            try:
+                mymove = input("Choose your move: ")
+                mymove = int(mymove) - 1
+            except:
+                if mymove == "q":
+                    exit(1)
+                mymove = None
+                print("not a number")
+                continue
+            if mymove < 0 or mymove >= len(board.north_pits) or not board.is_legal(side, mymove):
+                mymove = None
+                print("not a legal move")
+                continue
+        return mymove
+    
+    # def notify(self, board:Board, action):
+    #     print(f"Opponent chose: {action+1}")
+
+class time_control:
+    def __init__(self, move_time = 3):
+        self.move_time = move_time
+               
+    def __call__(self, board:Board):
+        '''dont need to rerun bc arena handles again moves'''
+        verbos = False
+        best_move = -1
+        end = time.time() + self.move_time  
+
+        # for move in minmax_agent(board, side=NORTH, max_player_side=NORTH):
+        for move in minmax_tobi_player().agent(board):
+            if time.time() > end:
+                break
+            if verbos:
+                print(best_move, end=",")
+            if move != best_move:
+                best_move = move
+        return best_move
+
+
+class alpha_zero_player:
+    args = dotdict({          
+        'numMCTSSims': 50,          # Number of games moves for MCTS to simulate.
+        'cpuct': 1,
+    })
+
+    def __init__(self, filename='best.pth.tar', depth_list:list=[1000], online_phase=False):
+        self.filename = filename
+        self.online_phase = online_phase
+        self.depth_list = depth_list
+        g = KalahGame()
+        nnet = NNetWrapper(KalahNNet_128res, g)
+        nnet.load_checkpoint(folder="best_models", filename=self.filename)
+        self.nmcts = MCTS(g, nnet, self.args)
+        
+    def __call__(self, board:Board):
+        return self.get_move(board).__next__()
+
+    def get_move(self, board:Board):
+        if self.online_phase:
+            board.active_player = -1
+        best_move = -1
+
+        for depth in self.depth_list:
+            pi = self.nmcts.getInstantActionProb(board, depth, temp=0)
+            if self.online_phase:
+                move = np.argmax(pi)
+            else:
+                move = np.random.choice(len(pi), p=pi)
+            
+            if move != best_move:
+                best_move = move
+            yield move
+
+    # def notify(self, board:Board, action):
+    #     print(f"Opponent chose: {action+1}")
+    #     KalahGame().display(board)
+
+
 
 
 if __name__ == "__main__":
     host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
-    #token = 'c+G6YUZAjTqEkQ==kdot'
     token = 'c+G6YUZAjTqEkQ==kdot2'
-    kgp.connect(minmax_tobi().agent, host=host, token=token, name='EvenLessThanUs')
+    kgp.connect(minmax_tobi_player().agent, 
+                host=host, 
+                token=token, 
+                name='EvenLessThanUs', 
+                debug=True)
 
     

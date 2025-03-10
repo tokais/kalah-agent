@@ -121,15 +121,16 @@ class MCTS():
 
             ## DEBUG
             if canonicalBoard.active_player == 1:
-                temp = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
-                temp2 = valids == temp
-                if temp2.all() == False:
+                t = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
+                t2 = valids == t
+                if t2.all() == False:
                     print("ERROR1")
             else:
-                temp = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
-                temp2 = valids == temp
-                if temp2.all() == False:
+                t = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
+                t2 = valids == t
+                if t2.all() == False:
                     print("ERROR2")
+                    
             if sum_Ps_s > 0:
                 self.Ps[s] /= sum_Ps_s  # renormalize
             else:
@@ -151,14 +152,14 @@ class MCTS():
 
                 ## DEBUG
         if canonicalBoard.active_player == 1:
-            temp = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
-            temp2 = valids == temp
-            if temp2.all() == False:
+            t = [1 if p > 0 else 0 for p in canonicalBoard.north_pits]
+            t2 = valids == t
+            if t2.all() == False:
                 print("ERROR3")
         else:
-            temp = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
-            temp2 = valids == temp
-            if temp2.all() == False:
+            t = [1 if p > 0 else 0 for p in canonicalBoard.south_pits]
+            t2 = valids == t
+            if t2.all() == False:
                 print("ERROR4")
 
         # pick the action with the highest upper confidence bound
@@ -170,8 +171,6 @@ class MCTS():
                 else:
                     u = self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
 
-                temp =  self.Ps[s][a]
-                temp = self.Ns[s]
                 if u > cur_best:
                     cur_best = u
                     best_act = a

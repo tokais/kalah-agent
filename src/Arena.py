@@ -1,7 +1,11 @@
 import logging
+from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
+from copy import copy, deepcopy
+from kalah.KalahGame import KalahGame
+from Game import Game
 
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
 
 log = logging.getLogger(__name__)
 
@@ -11,7 +15,7 @@ class Arena():
     An Arena class where any 2 agents can be pit against each other.
     """
 
-    def __init__(self, player1, player2, game, display=None):
+    def __init__(self, player1, player2, game:Game, display=None):
         """
         Input:
             player 1,2: two functions that takes board as input, return action
@@ -79,6 +83,13 @@ class Arena():
             self.display(board)
         return curPlayer * self.game.getGameEnded(board, curPlayer)
 
+    def play_single_game_parallel(self, verbose = True): #self,player1, player2, game, display, verbose=False):
+        g = KalahGame()
+        a = Arena(self.player1, self.player2, g, self.display)
+        gameResult = a.playGame(verbose=verbose)
+    
+        return gameResult
+    
     def playGames(self, num, verbose=False):
         """
         Plays num games in which player1 starts num/2 games and player2 starts
@@ -90,35 +101,42 @@ class Arena():
             draws:  games won by nobody
         """
 
-        def play_single_game(_):
-            gameResult = self.playGame(verbose=verbose)
-            return gameResult
-
         num = int(num / 2)
         oneWon = 0
         twoWon = 0
         draws = 0
 
-        with ThreadPoolExecutor() as executor:
-            results = list(tqdm(executor.map(play_single_game, range(num)), desc="Arena.playGames (1)", total=num))
-            for gameResult in results:
-                if gameResult == 1:
-                    oneWon += 1
-                elif gameResult == -1:
-                    twoWon += 1
-                else:
-                    draws += 1
+        # for _ in tqdm(range(num)):
+        #     results = self.play_single_game_parallel(verbose=verbose)
+        args = [verbose]*num
+        with Pool(1) as pool:
+            results = pool.map(self.play_single_game_parallel, args)
+        
+        for gameResult in results:
+            print(f'Game result: {gameResult}')
+            if gameResult == 1:
+                oneWon += 1
+            elif gameResult == -1:
+                twoWon += 1
+            else:
+                draws += 1
 
         self.player1, self.player2 = self.player2, self.player1
 
-        with ThreadPoolExecutor() as executor:
-            results = list(tqdm(executor.map(play_single_game, range(num)), desc="Arena.playGames (2)", total=num))
-            for gameResult in results:
-                if gameResult == -1:
-                    oneWon += 1
-                elif gameResult == 1:
-                    twoWon += 1
-                else:
-                    draws += 1
+        # for _ in tqdm(range(num)):
+        #     results = self.play_single_game_parallel(_, verbose=verbose)
+        with Pool(4) as pool:
+            args = [verbose]*num
+            results = pool.map(self.play_single_game_parallel, args)
+
+
+        for gameResult in results:
+            print(f'Game result: {gameResult}')
+            if gameResult == -1:
+                oneWon += 1
+            elif gameResult == 1:
+                twoWon += 1
+            else:
+                draws += 1
 
         return oneWon, twoWon, draws
