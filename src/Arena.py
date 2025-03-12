@@ -1,21 +1,22 @@
 import logging
-from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy, deepcopy
-from kalah.KalahGame import KalahGame
-from Game import Game
+from multiprocessing import Pool
 
 from tqdm import tqdm
+
+from Game import Game
+from kalah.KalahGame import KalahGame
 
 log = logging.getLogger(__name__)
 
 
-class Arena():
+class Arena:
     """
     An Arena class where any 2 agents can be pit against each other.
     """
 
-    def __init__(self, player1, player2, game:Game, display=None):
+    def __init__(self, player1, player2, game: Game, display=None):
         """
         Input:
             player 1,2: two functions that takes board as input, return action
@@ -57,13 +58,17 @@ class Arena():
                 assert self.display
                 print("Turn ", str(it), "Player ", str(curPlayer))
                 self.display(board)
-            action = players[curPlayer + 1](self.game.getCanonicalForm(board, curPlayer))
+            action = players[curPlayer + 1](
+                self.game.getCanonicalForm(board, curPlayer)
+            )
 
-            valids = self.game.getValidMoves(self.game.getCanonicalForm(board, curPlayer), 1)
+            valids = self.game.getValidMoves(
+                self.game.getCanonicalForm(board, curPlayer), 1
+            )
 
             if valids[action] == 0:
-                log.error(f'Action {action} is not valid!')
-                log.debug(f'valids = {valids}')
+                log.error(f"Action {action} is not valid!")
+                log.debug(f"valids = {valids}")
                 assert valids[action] > 0
 
             # Notifying the opponent for the move
@@ -79,17 +84,22 @@ class Arena():
 
         if verbose:
             assert self.display
-            print("Game over: Turn ", str(it), "Result ", str(self.game.getGameEnded(board, 1)))
+            print(
+                "Game over: Turn ",
+                str(it),
+                "Result ",
+                str(self.game.getGameEnded(board, 1)),
+            )
             self.display(board)
         return curPlayer * self.game.getGameEnded(board, curPlayer)
 
-    def play_single_game_parallel(self, verbose = True): #self,player1, player2, game, display, verbose=False):
+    def play_single_game_parallel(self, verbose=False):
         g = KalahGame()
         a = Arena(self.player1, self.player2, g, self.display)
         gameResult = a.playGame(verbose=verbose)
-    
+
         return gameResult
-    
+
     def playGames(self, num, verbose=False):
         """
         Plays num games in which player1 starts num/2 games and player2 starts
@@ -108,12 +118,12 @@ class Arena():
 
         # for _ in tqdm(range(num)):
         #     results = self.play_single_game_parallel(verbose=verbose)
-        args = [verbose]*num
-        with Pool(1) as pool:
+        args = [verbose] * num
+        with Pool(4) as pool:
             results = pool.map(self.play_single_game_parallel, args)
-        
+
         for gameResult in results:
-            print(f'Game result: {gameResult}')
+            #print(f"Game result: {gameResult}")
             if gameResult == 1:
                 oneWon += 1
             elif gameResult == -1:
@@ -126,12 +136,11 @@ class Arena():
         # for _ in tqdm(range(num)):
         #     results = self.play_single_game_parallel(_, verbose=verbose)
         with Pool(4) as pool:
-            args = [verbose]*num
+            args = [verbose] * num
             results = pool.map(self.play_single_game_parallel, args)
 
-
         for gameResult in results:
-            print(f'Game result: {gameResult}')
+            print(f"Game result: {gameResult}")
             if gameResult == -1:
                 oneWon += 1
             elif gameResult == 1:

@@ -20,3 +20,5 @@ best_models/
 docker
 train_examples/*
 temp_128res/
+src/learn/learn_multiprocessing.ipynb
+src/learn/multiprocessing_test.py

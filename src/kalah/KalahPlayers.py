@@ -1,13 +1,14 @@
-import numpy as np
-
-import src.kalah.kgp as kgp
-from src.kalah.KalahLogic import Board
 import math
 import random
 import time
+
+import numpy as np
+
+import src.kalah.kgp as kgp
 from src.kalah.KalahGame import KalahGame
-from src.kalah.pytorch.NNetWrapper import NNetWrapper
+from src.kalah.KalahLogic import Board
 from src.kalah.pytorch.KalahNNet import KalahNNet_128res
+from src.kalah.pytorch.NNetWrapper import NNetWrapper
 from src.MCTS import MCTS
 from src.utils import dotdict
 
@@ -270,14 +271,26 @@ class alpha_zero_player:
         'cpuct': 1,
     })
 
-    def __init__(self, filename='best.pth.tar', depth_list:list=[1000], online_phase=False):
+    def __init__(self, 
+                 filename='best.pth.tar', 
+                 folder='best_models',
+                 mcts= None,
+                 depth_list:list=[1000], 
+                 online_phase=False,
+                 verbose=False
+                 ):
         self.filename = filename
         self.online_phase = online_phase
         self.depth_list = depth_list
+        self.verbose=verbose
         g = KalahGame()
-        nnet = NNetWrapper(KalahNNet_128res, g)
-        nnet.load_checkpoint(folder="best_models", filename=self.filename)
-        self.nmcts = MCTS(g, nnet, self.args)
+
+        if mcts is None:
+            nnet = NNetWrapper(KalahNNet_128res, g)
+            nnet.load_checkpoint(folder=folder, filename=self.filename)
+            self.nmcts = MCTS(g, nnet, self.args)
+        else:
+            self.nmcts = mcts
         
     def __call__(self, board:Board):
         return self.get_move(board).__next__()
@@ -286,6 +299,9 @@ class alpha_zero_player:
         if self.online_phase:
             board.active_player = -1
         best_move = -1
+
+        if self.verbose:
+            print(board)
 
         for depth in self.depth_list:
             pi = self.nmcts.getInstantActionProb(board, depth, temp=0)
@@ -296,6 +312,10 @@ class alpha_zero_player:
             
             if move != best_move:
                 best_move = move
+                if self.verbose:
+                    print(best_move, end=",")
+                    print(board.sow((board.active_player+1)//2, best_move)[0])
+
             yield move
 
     # def notify(self, board:Board, action):

@@ -58,13 +58,5 @@ def main():
     log.info('Starting the learning process 🎉')
     c.learn()
 
-def testArena():
-    g = KalahGame()
-    nnet = NNetWrapper(g)
-    c = Coach(g, nnet, args)
-    c.testArena()
-
-
 if __name__ == "__main__":
-    # testArena()
     main()
