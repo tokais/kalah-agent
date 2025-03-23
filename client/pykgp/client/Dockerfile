@@ -9,6 +9,8 @@ FROM docker.io/library/pypy:3
 # This will be our working directory within the container.
 WORKDIR /usr/src/app
 
+RUN pip3 install --no-cache-dir numpy websocket-client
+
 # Copy everything from this actual directory into the working
 # directory within the container.
 COPY . .

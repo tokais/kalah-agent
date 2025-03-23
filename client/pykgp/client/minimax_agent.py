@@ -3,14 +3,11 @@
 # To write a Python client, we first need to import kgp.  In case
 # "kgp.py" is not in the current working directory, adjust your
 # PYTHONPATH.
-import multiprocessing
-multiprocessing.set_start_method("fork")
-
 import kgp
 import numpy as np
 from kgp import Board
 
-ETA = .8
+ETA = .9
 
 def agent(state: Board):
     #(str(state), side, move) : new state
@@ -50,7 +47,6 @@ def agent(state: Board):
                 next_player = side
 
         # is there a extra move, then search it second
-        # should result in placement in the beginning of sorted move list
         elif landing_pit == state.size:
             score = 999
             next_player = side
@@ -134,8 +130,7 @@ def agent(state: Board):
 
 if __name__ == "__main__":
     host = "wss://kalah.kwarc.info/socket" #if os.getenv("USE_WEBSOCKET") else "localhost"
-    #token = 'c+G6YUZAjTqEkQ==kdot'
-    token = 'c+G6YUZAjTqEkQ==kdot2'
-    kgp.connect(agent, host=host, token=token, name='EvenLessThanUs')
+    token = 'c+G6YUZAjTqEkQ==nls'
+    kgp.connect(agent, host=host, token=token, name='NotLikeUs')
 
     
